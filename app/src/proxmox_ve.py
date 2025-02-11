@@ -58,13 +58,15 @@ temp_id = 0
 node    = ""
 
 #------ Initialize Proxmox VE info --------------------------------------#
-# Set up the Proxmox VE API
+# Set up the Proxmox VE API and get the region, template ID, and node    #
+#------------------------------------------------------------------------#
+
 async def InitializePVEInfo():
-    global pve, region, temp_id, node
+    global pve, region, temp_id, node # Declare global variables
     
     print('Initializing Proxmox VE info...')
     
-    # Proxmox VE API
+    # Set up the Proxmox VE API
     pve = ProxmoxAPI(config.PVE_HOST, user=config.PVE_USER, token_name=config.PVE_TOKEN, token_value=config.PVE_SECRET, verify_ssl=False)
     
     # Region
@@ -80,7 +82,9 @@ async def InitializePVEInfo():
     print('Proxmox VE info initialized')
 
 #------ Start instance --------------------------------------------------#
-# Start a VM instance
+# Start a VM instance with the given VM ID                               #
+#------------------------------------------------------------------------#
+
 def StartInstance(r, vmid):
     if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
