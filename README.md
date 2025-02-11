@@ -1,6 +1,6 @@
 # Terrakko
 
-<img align="right" src="./logos/terrakko.png" alt="Terrakko logo" width=250cm>
+<img align="right" src="./logos/terrakko_icon.png" alt="Terrakko logo" width=250cm>
 
 Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Discord.
 
