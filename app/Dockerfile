@@ -7,7 +7,7 @@ ARG lang
 ARG dir
 
 ENV DEBIAN_FRONTEND = noninter active
-ENV LANG ${lang}“
+ENV LANG ${lang}
 
 WORKDIR /root/${dir}
 

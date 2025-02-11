@@ -22,7 +22,7 @@ load_dotenv()
 #------ Config ----------------------------------------------------------#
 
 # Version
-version = "0.3.0"
+version = "1.0.0"
 
 # Logo
 LOGO = """
@@ -35,7 +35,7 @@ LOGO = """
 """
 
 # Domain name
-DOMEIN = ".proxmoxve.internal.nekko-lab.dev"
+DOMEIN = os.getenv("DOMEIN")
 
 # Timeout
 TIME = 180
@@ -57,8 +57,8 @@ PVE_USER = os.getenv("PVE_USER")
 PVE_PASS = os.getenv("PVE_PASS")
 PVE_TOKEN = os.getenv("PVE_TOKEN")
 PVE_SECRET = os.getenv("PVE_SECRET")
-PVE_REGION = json.loads(os.getenv('PVE_REGION'))
-PVE_TEMP_ID = json.loads(os.getenv('PVE_TEMP_ID'))
+PVE_REGION = json.loads(os.getenv("PVE_REGION"))
+PVE_TEMP_ID = json.loads(os.getenv("PVE_TEMP_ID"))
 
 # Discord Bot
 DIS_TOKEN = os.getenv("DIS_TOKEN")
