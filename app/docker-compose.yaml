@@ -1,0 +1,23 @@
+services:
+  terrakko:
+    container_name: terrakko
+    tty: true
+    build:
+      context: .
+      dockerfile: 'Dockerfile'
+      args:
+          lang: 'C'
+          dir: "${WORKDIR}"
+    working_dir: /root/${WORKDIR}
+    volumes:
+      - ./${WORKDIR}:/root/${WORKDIR}
+    networks:
+      - default
+    environment:
+      - TZ=Asia/Tokyo
+    env_file:
+      - .env
+
+networks:
+  default:
+    driver: bridge

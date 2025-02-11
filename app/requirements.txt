@@ -1,0 +1,9 @@
+aiosqlite==0.20.0
+asyncio==3.4.3
+bcrypt==4.2.0
+discord.py==2.4.0
+proxmoxer==2.1.0
+pysqlite3==0.5.4
+python-dotenv==1.0.1
+requests==2.32.3
+urllib3==2.2.3
