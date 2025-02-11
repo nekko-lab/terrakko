@@ -248,7 +248,7 @@ class SetCloudinit(Modal):
             
             return 0
         
-        userlist = await db.get_data(interaction.user.id)
+        userlist = await db.get_userdata(interaction.user.id)
         
         if len(userlist) != 5:
             await interaction.response.send_message("User data not found.", ephemeral=True)
@@ -371,7 +371,7 @@ class MenuView(View):
     
     @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
     async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await interaction.response.send_modal(SetUserData(self.ctx, await db.get_data(self.ctx.author.id), "Configure your info."))
+        await interaction.response.send_modal(SetUserData(self.ctx, await db.get_userdata(self.ctx.author.id), "Configure your info."))
 
 #---------------------------------------------------------------#
 # Ready
