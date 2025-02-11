@@ -1,4 +1,4 @@
 Docker*
-docker_compose*
+docker-compose*
 db/
 .env*
