@@ -71,6 +71,8 @@ bot = commands.Bot(
 )
 
 #------ Task Status -----------------------------------------------------#
+# Wait for task completion                                               #
+#------------------------------------------------------------------------#
 
 async def WaitForTaskCompletion(interaction, vmid, task):
     data = {"status": ""}
@@ -140,7 +142,7 @@ async def WaitForTaskCompletion(interaction, vmid, task):
     # Task completed
     await interaction.followup.send("Tasks completed", ephemeral=True)
 
-#---------------------------------------------------------------#
+#------ Confirm and execute ------------------------------------#
 # Confirm and Execute the task (Create, Delete, UserData)       #
 #---------------------------------------------------------------#
 
@@ -173,89 +175,186 @@ class ConfirmAndExecute(View):
         self.vmid   = vmid
     
     
-    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes")
-    async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        if self.mode == "create":
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes") # UI: Yes button
+    
+    async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
+        
+        if self.mode == "create": # mode: create
+            
+            # message: Creating VM
             await interaction.response.send_message("Inform you here when the VM is completed.\nCreating VM...", ephemeral=True)
-            for i in range(len(self.vmname)):
+            
+            for i in range(len(self.vmname)): # Create VM
+                
+                # Create VM instance (VMID, VM Name, User Name, Password, SSH Key)
                 await proxmox_ve.CreateInstance(proxmox_ve.GetVMID(), f"{interaction.user.id}-{self.vmname[i].value}", self.ciname, self.cipass, self.sshkey)
+                
                 await asyncio.sleep(1)
             
+            
+            # Wait for task completion: task == create
             await WaitForTaskCompletion(interaction, self.vmid, "create")
-        elif self.mode == "delete":
+            
+        elif self.mode == "delete": # mode: delete
+            
+            # message: Deleting VM
             await interaction.response.send_message("Inform you here when the VM is completed.\nDeleting VM...", ephemeral=True)
+            
+            # Delete VM instance
             await proxmox_ve.DeleteInstance(self.region, self.vmid)
+            
+            # Wait for task completion: task == delete
             await WaitForTaskCompletion(interaction, self.vmid, "delete")
-        elif self.mode == "userdata":
+            
+        elif self.mode == "userdata": # mode: userdata
+            
+            # message: Saving user data
             await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
+            
+            # message: User data saved
             await interaction.response.send_message("Tasks completed", ephemeral=True)
-        else:
+            
+        else: # mode: unknown
+            
+            # message: Error
             await interaction.response.send_message("Error", ephemeral=True)
     
-    @discord.ui.button(label="No", style=discord.ButtonStyle.red, custom_id="no")
-    async def no(self, interaction: discord.Interaction, button: discord.Button) -> None:
+    
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red, custom_id="no") # UI: No button
+    
+    async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
+        
+        # message: Canceled
         await interaction.response.send_message("Canceled", ephemeral=True)
 
-#---------------------------------------------------------------#
-# Operate VM: Start, Shutdown, Reboot, Stop
-class BootVM(View):
-    def __init__(self, r, vmid, ctx, timeout=config.TIME):
+#------ Operate VM power ------------------------------------------------#
+# Operate the VM instance's power: Start, Shutdown, Reboot, Stop         #
+#------------------------------------------------------------------------#
+
+class OperateVMPower(View):
+    
+    def __init__(self, r, vmid, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # ctx: context
         self.ctx = ctx
+        
+        # vmid
         self.vmid = vmid
+        
+        # region
         self.region = r
+        
+        # status
         self.status = {}
     
-    async def UpdateStatus(self):
+    
+    async def UpdateVMStatus(self): # Update the VM status
+        
+        # Get VM status
         self.status = await proxmox_ve.GetVMStatus(self.region, self.vmid)
     
-    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="start")
-    async def StartVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await self.UpdateStatus()
-        if self.status["status"] == "stopped":
+    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="start") # UI: Start button
+    
+    async def StartVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start VM
+        
+        # Update the VM status
+        await self.UpdateVMStatus()
+        
+        if self.status["status"] == "stopped": # status: stopped
+            
+            # message: Start VM
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nStart VM", ephemeral=True)
+            
+            # Start VM instance
             proxmox_ve.StartInstance(self.region, self.vmid)
             
+            # Wait for task completion: task == start
             await WaitForTaskCompletion(interaction, self.vmid, "start")
-        else:
+            
+        else: # status: running
+            
+            # message: VM is already running
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already running.", ephemeral=True)
     
-    @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.gray, custom_id="shutdown")
-    async def ShutdownVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await self.UpdateStatus()
-        if self.status["status"] == "running":
+    
+    @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.gray, custom_id="shutdown") # UI: Shutdown button
+    
+    async def ShutdownVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Shutdown VM
+        
+        # Update the VM status
+        await self.UpdateVMStatus()
+        
+        if self.status["status"] == "running": # status: running
+            
+            # message: Shutdown VM
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nShutdown VM", ephemeral=True)
+            
+            # Shutdown VM instance
             proxmox_ve.ShutdownInstance(self.region, self.vmid)
             
+            # Wait for task completion: task == shutdown
             await WaitForTaskCompletion(interaction, self.vmid, "shutdown")
-        else:
+            
+        else: # status: stopped
+            
+            # message: VM is already stopped
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
-    @discord.ui.button(label="Reboot", style=discord.ButtonStyle.blurple, custom_id="reboot")
-    async def RebootVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await self.UpdateStatus()
-        if self.status["status"] == "running":
+    
+    @discord.ui.button(label="Reboot", style=discord.ButtonStyle.blurple, custom_id="reboot") # UI: Reboot button
+    
+    async def ReOperateVMPower(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Reboot VM
+        
+        # Update the VM status
+        await self.UpdateVMStatus()
+        
+        if self.status["status"] == "running": # status: running
+            
+            # message: Reboot VM
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nReboot VM", ephemeral=True)
+            
+            # Reboot VM instance
             proxmox_ve.RebootInstance(self.region, self.vmid)
             
+            # Wait for task completion: task == reboot
             await WaitForTaskCompletion(interaction, self.vmid, "reboot")
-        else:
+            
+        else: # status: stopped
+            
+            # message: VM is already stopped
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="stop")
-    async def StopVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await self.UpdateStatus()
-        if self.status["status"] == "running":
+    
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="stop") # UI: Stop button
+    async def StopVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Stop VM
+        
+        # Update the VM status
+        await self.UpdateVMStatus()
+        
+        if self.status["status"] == "running": # status: running
+            
+            # message: Stop VM
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nStop VM", ephemeral=True)
+            
+            # Stop VM instance
             proxmox_ve.StopInstance(self.region, self.vmid)
             
+            # Wait for task completion: task == stop
             await WaitForTaskCompletion(interaction, self.vmid, "stop")
-        else:
+            
+        else: # status: stopped
+            
+            # message: VM is already stopped
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
 
-#---------------------------------------------------------------#
-# Selected VM Name
-class VMNameSelectMenu(View):
+#------ Select VM Name --------------------------------------------------#
+# Selected your VM Name                                                  #
+#------------------------------------------------------------------------#
+
+class SelectVMNameMenu(View):
     def __init__(self, mode, ctx, timeout=config.TIME):
         super().__init__(timeout=timeout)
         self.ctx = ctx
@@ -283,7 +382,7 @@ class VMNameSelectMenu(View):
             elif self.mode == "info":
                 try:
                     await interaction.response.send_message("What do you want to do with this VM?", ephemeral=True)
-                    await interaction.edit_original_response(content=msg, view=BootVM(val[0], val[1], self.ctx, timeout=config.TIME))
+                    await interaction.edit_original_response(content=msg, view=OperateVMPower(val[0], val[1], self.ctx, timeout=config.TIME))
                 except Exception as e:
                     print(f"Info Error: {e}")
             else:
@@ -392,7 +491,7 @@ class SelectVMNumber(View):
 
 #---------------------------------------------------------------#
 # Menu
-class MenuView(View):
+class MainMenu(View):
     def __init__(self, ctx, timeout=config.TIME):
         super().__init__(timeout=timeout)
         self.ctx = ctx
@@ -405,7 +504,7 @@ class MenuView(View):
     
     @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        view = VMNameSelectMenu("info", self.ctx, timeout=config.TIME)
+        view = SelectVMNameMenu("info", self.ctx, timeout=config.TIME)
         if len(self.VMList) == 0:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
         else:
@@ -418,7 +517,7 @@ class MenuView(View):
     
     @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        view = VMNameSelectMenu("delete", self.ctx, timeout=config.TIME)
+        view = SelectVMNameMenu("delete", self.ctx, timeout=config.TIME)
         if len(self.VMList) == 0:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
         else:
@@ -456,7 +555,7 @@ async def menu(ctx):
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
     await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete a VM\nShow info:\tShow VM information\n\nPowered by Nekko Cloud {config.version}", ephemeral=True)
-    await ctx.send(view=MenuView(ctx, timeout=config.TIME), ephemeral=True)
+    await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
 #---------------------------------------------------------------#
 # Delete Database
