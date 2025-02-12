@@ -389,6 +389,7 @@ def GetVMIPAddresses(r, vmid):
                     
                     ipv6_addresses.append(ip_info['ip-address'])
 
+        
         # Return the IP addresses
         return ipv4_addresses, ipv6_addresses
     

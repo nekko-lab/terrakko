@@ -38,6 +38,7 @@ async def create_table():
         async with conn.cursor() as cur: # Create a cursor
             
             try: # Try to create the table
+                
                 # Create the table
                 await cur.execute(f"CREATE TABLE {config.dbname}(id INTEGER PRIMARY KEY AUTOINCREMENT, uuid STRING, username STRING, password STRING, sshkey STRING)")
                 
@@ -69,6 +70,7 @@ async def insert_data(userid, username, password, sshkey):
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
         
         async with conn.cursor() as cur: # Create a cursor
+            
             # Insert the data
             await cur.execute(f"INSERT INTO {config.dbname}(uuid, username, password, sshkey) VALUES(?, ?, ?, ?)", (userid, username, password, sshkey))
             
@@ -82,6 +84,7 @@ async def update_data(userid, username, password, sshkey):
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
         
         async with conn.cursor() as cur: # Create a cursor
+            
             # Update the data
             await cur.execute(f"UPDATE {config.dbname} SET username = ?, password = ?, sshkey = ? WHERE uuid = ?", (username, password, sshkey, userid))
             
@@ -97,6 +100,7 @@ async def get_userdata(userid):
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
         
         async with conn.cursor() as cur: # Create a cursor
+            
             # Get the data
             await cur.execute(f"SELECT * FROM {config.dbname} WHERE uuid = ?", (userid,))
             
@@ -112,6 +116,7 @@ async def get_column(column):
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
         
         async with conn.cursor() as cur: # Create a cursor
+            
             # Get the column
             await cur.execute(f"SELECT {column} FROM {config.dbname}")
             
@@ -123,6 +128,7 @@ async def get_column(column):
 #------------------------------------------------------------------------#
 
 try: # Try to create the table
+    
     # Run the create_table function
     asyncio.run(create_table())
     

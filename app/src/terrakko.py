@@ -67,6 +67,7 @@ bot = commands.Bot(
     intents=intents,                                  # Intents
     
     activity=discord.Game("Nekko Cloud")              # Activity
+    
 )
 
 #------ Task Status -----------------------------------------------------#
@@ -113,6 +114,8 @@ async def WaitForTaskCompletion(interaction, vmid, task):
     else: # task: unknown
         
         await interaction.followup.send("Error", ephemeral=True)
+        
+        return 1
     
     
     while data["status"] == vm_status:  # running, stopped
@@ -138,17 +141,37 @@ async def WaitForTaskCompletion(interaction, vmid, task):
     await interaction.followup.send("Tasks completed", ephemeral=True)
 
 #---------------------------------------------------------------#
-# Confirm and Execute
-class Confirm(View):
-    def __init__(self, mode, vmname, ciname, cipass, sshkey, r, vmid, timeout=config.TIME):
+# Confirm and Execute the task (Create, Delete, UserData)       #
+#---------------------------------------------------------------#
+
+class ConfirmAndExecute(View):
+    
+    def __init__(self, mode, vmname, ciname, cipass, sshkey, r, vmid, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # mode: create, delete, userdata
         self.mode   = mode
+        
+        # vmname
         self.vmname = vmname
+        
+        # ciname
         self.ciname = ciname
+        
+        # cipass
         self.cipass = cipass
+        
+        # sshkey
         self.sshkey = sshkey
+        
+        # region
         self.region = r
+        
+        # vmid
         self.vmid   = vmid
+    
     
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes")
     async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None:
@@ -254,7 +277,7 @@ class VMNameSelectMenu(View):
                 try:
                     await interaction.response.send_message(msg, ephemeral=True)
                     await interaction.followup.send("Do you want to delete this VM?\n(You must stop the VM before deleting it.)", ephemeral=True)
-                    await interaction.followup.send(view=Confirm("delete", "", "", "", "", val[0], val[1], config.TIME), ephemeral=True)
+                    await interaction.followup.send(view=ConfirmAndExecute("delete", "", "", "", "", val[0], val[1], config.TIME), ephemeral=True)
                 except Exception as e:
                     print(f"Delete Error: {e}")
             elif self.mode == "info":
@@ -298,7 +321,7 @@ class SetCloudinit(Modal):
         msg += "\nDo you want to create this?"
         
         await interaction.response.send_message(msg, ephemeral=True)
-        confirm_view = Confirm(
+        confirm_view = ConfirmAndExecute(
             "create",
             self.vmname,
             userlist[2],
@@ -334,7 +357,7 @@ class SetUserData(Modal):
             await interaction.response.send_message("Invalid input.", ephemeral=True)
         else:
             await interaction.response.send_message(f"User Name:\t{self.ciname}\nPassword:\t||{self.cipass}||\nSSH Key:\t||{self.sshkey}||\n\nDo you want to save this?", ephemeral=True)
-            confirm_view = Confirm(
+            confirm_view = ConfirmAndExecute(
                 "userdata",
                 "",
                 self.ciname.value,
