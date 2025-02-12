@@ -44,7 +44,9 @@ import proxmox_ve
 
 
 
-#------ Init Bot --------------------------------------------------------#
+#------ Initialize Bot --------------------------------------------------#
+# Intents for the bot                                                    #
+#------------------------------------------------------------------------#
 
 # Intents
 intents = discord.Intents.default()
@@ -57,47 +59,82 @@ intents.messages = True
 
 # Bot commands options
 bot = commands.Bot(
+    
     command_prefix=commands.when_mentioned_or("trk"), # Command prefix
+    
     case_insensitive=True,                            # Case insensitive
+    
     intents=intents,                                  # Intents
+    
     activity=discord.Game("Nekko Cloud")              # Activity
 )
 
 #------ Task Status -----------------------------------------------------#
 
-async def TaskStatus(interaction, vmid, task):
+async def WaitForTaskCompletion(interaction, vmid, task):
     data = {"status": ""}
     await asyncio.sleep(10)
-    looktask = ""
+    vm_status = ""
     
-    if task == "create":
-        await asyncio.sleep(100)    # cloud-initからリクエストがあるまで待機に変更したい
-        looktask = "stopped"
-    elif task == "delete":
-        looktask = "stopped"
-    elif task == "info":
-        looktask = "running"
-    elif task == "start":
-        looktask = "running"
-    elif task == "shutdown":
-        looktask = "stopped"
-    elif task == "stop":
-        looktask = "stopped"
-    elif task == "pause":
-        looktask = "running"
-    elif task == "reboot":
-        looktask = "running"
+    if task == "create": # task: create
+        
+        await asyncio.sleep(180) # cloud-initからリクエストがあるまで待機に変更したい
+        
+        vm_status = "stopped"
+        
+    elif task == "delete": # task: delete
+        
+        vm_status = "stopped"
+        
+    elif task == "info": # task: info
+        
+        vm_status = "running"
+        
+    elif task == "start": # task: start
+        
+        vm_status = "running"
+        
+    elif task == "shutdown": # task: shutdown
+        
+        vm_status = "stopped"
+        
+    elif task == "stop": # task: stop
+        
+        vm_status = "stopped"
+        
+    elif task == "pause": # task: pause
+        
+        vm_status = "running"
+        
+    elif task == "reboot": # task: reboot
+        
+        vm_status = "running"
+        
+    else: # task: unknown
+        
+        await interaction.followup.send("Error", ephemeral=True)
     
-    while data["status"] == looktask:  # running, stopped
-        try:
+    
+    while data["status"] == vm_status:  # running, stopped
+        
+        try: # Get VM status
+            
+            # current status
             data = proxmox_ve.node.qemu(vmid).status.current.get()
+            
             print({vmid} is data["status"])
+            
             await asyncio.sleep(5)
-        except ConnectionError as e:
+            
+        except ConnectionError as e: # Connection error
+            
             print(f"Connection error: {e}")
+            
             await asyncio.sleep(5)
+            
             continue
     
+    # Task completed
     await interaction.followup.send("Tasks completed", ephemeral=True)
 
 #---------------------------------------------------------------#
@@ -121,11 +158,11 @@ class Confirm(View):
                 await proxmox_ve.CreateInstance(proxmox_ve.GetVMID(), f"{interaction.user.id}-{self.vmname[i].value}", self.ciname, self.cipass, self.sshkey)
                 await asyncio.sleep(1)
             
-            await TaskStatus(interaction, self.vmid, "create")
+            await WaitForTaskCompletion(interaction, self.vmid, "create")
         elif self.mode == "delete":
             await interaction.response.send_message("Inform you here when the VM is completed.\nDeleting VM...", ephemeral=True)
             await proxmox_ve.DeleteInstance(self.region, self.vmid)
-            await TaskStatus(interaction, self.vmid, "delete")
+            await WaitForTaskCompletion(interaction, self.vmid, "delete")
         elif self.mode == "userdata":
             await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
             await interaction.response.send_message("Tasks completed", ephemeral=True)
@@ -156,7 +193,7 @@ class BootVM(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nStart VM", ephemeral=True)
             proxmox_ve.StartInstance(self.region, self.vmid)
             
-            await TaskStatus(interaction, self.vmid, "start")
+            await WaitForTaskCompletion(interaction, self.vmid, "start")
         else:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already running.", ephemeral=True)
     
@@ -167,7 +204,7 @@ class BootVM(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nShutdown VM", ephemeral=True)
             proxmox_ve.ShutdownInstance(self.region, self.vmid)
             
-            await TaskStatus(interaction, self.vmid, "shutdown")
+            await WaitForTaskCompletion(interaction, self.vmid, "shutdown")
         else:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
@@ -178,7 +215,7 @@ class BootVM(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nReboot VM", ephemeral=True)
             proxmox_ve.RebootInstance(self.region, self.vmid)
             
-            await TaskStatus(interaction, self.vmid, "reboot")
+            await WaitForTaskCompletion(interaction, self.vmid, "reboot")
         else:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
@@ -189,7 +226,7 @@ class BootVM(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nStop VM", ephemeral=True)
             proxmox_ve.StopInstance(self.region, self.vmid)
             
-            await TaskStatus(interaction, self.vmid, "stop")
+            await WaitForTaskCompletion(interaction, self.vmid, "stop")
         else:
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
 

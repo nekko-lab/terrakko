@@ -239,11 +239,11 @@ async def InitializeInstance(vmid, ciuser, passwd, sshkey):
         # Set the VM status to initialize
         node.qemu(vmid).config.set(
             
-            ciuser=ciuser,
+            ciuser=ciuser,                                              # Cloud-init user
             
-            cipassword=passwd,
+            cipassword=passwd,                                          # Cloud-init password
             
-            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='')
+            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='') # Cloud-init SSH key
             
         )
         
@@ -309,14 +309,19 @@ def GetVMID():
 
 async def GetVMStatus(r, vmid):
     
-    try:
+    try: # Try to get the status of the VM instance
+        
         return pve.nodes(r).qemu(vmid).status.current.get()
-    except Exception as e:
+    
+    except Exception as e: # Catch any exceptions
+        
         print(f"Getting VM status failed: {e}")
         
         return None
 
 #------ Get all VM Status ------------------------------------------------#
+# Get the status of all VM instances                                      #
+#-------------------------------------------------------------------------#
 
 def GetNodeVM(author_id):
     
@@ -328,19 +333,24 @@ def GetNodeVM(author_id):
         pve.nodes.get() # Catch exception if not logged in
         
         # Return the status of all VM instances sorted by VM ID
-        return sorted([
+        return sorted(
+            [
             
-            [pve_node['node'], int(vm['vmid']), vm['name'], vm['status']]
+                [pve_node['node'], int(vm['vmid']), vm['name'], vm['status']]  # Node, VM ID, VM name, VM status
+                
+                for pve_node in pve.nodes.get()                                # Get the status of all nodes
+                
+                for vm in pve("nodes/{0}/qemu".format(pve_node['node'])).get() # Get the status of all VM instances
+                
+                if 100 <= int(vm['vmid']) < 90000                              # Check if the VM ID is valid
+                
+                if re.match(f"{author_id}", vm['name'])                        # Check if the VM name matches the author ID
+                
+            ], 
             
-            for pve_node in pve.nodes.get()
-            
-            for vm in pve("nodes/{0}/qemu".format(pve_node['node'])).get()
-            
-            if 100 <= int(vm['vmid']) < 90000
-            
-            if re.match(f"{author_id}", vm['name'])
-            
-        ], key=lambda x: x[1])
+            key=lambda x: x[1]                                                 # Sort by VM ID
+        
+        )
         
     except Exception as e: # Catch any exceptions
         
