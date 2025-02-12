@@ -329,6 +329,7 @@ class OperateVMPower(View):
     
     
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="stop") # UI: Stop button
+    
     async def StopVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Stop VM
         
         # Update the VM status
@@ -355,68 +356,139 @@ class OperateVMPower(View):
 #------------------------------------------------------------------------#
 
 class SelectVMNameMenu(View):
-    def __init__(self, mode, ctx, timeout=config.TIME):
+    
+    def __init__(self, mode, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # ctx: context
         self.ctx = ctx
+        
+        # mode: delete, info
         self.mode = mode
     
+    
+    # UI: Select VM
     @discord.ui.select(
-        custom_id="SelectVM",
-        placeholder="Select your VM"
+        
+        custom_id="SelectVM",        # UI: Select VM
+        
+        placeholder="Select your VM" # UI: Placeholder
+        
     )
-    async def on_select(self, interaction: discord.Interaction, select: discord.ui.Select):
-        val = select.values[0].split(" ") # region, vmid, vmname, status
+    
+    async def SelectedVM(self, interaction: discord.Interaction, select: discord.ui.Select): # Function: Select VM
+        
+        # Select VM values: region, vmid, vmname, status
+        val = select.values[0].split(" ")
+        
+        # Get VM status
         status = await proxmox_ve.GetVMStatus(val[0], val[1])
         
-        if re.match(f"{self.ctx.author.id}", val[2]) and status != None:
+        if re.match(f"{self.ctx.author.id}", val[2]) and status != None: # Check the VM owner
+            
+            # Get VM IP addresses
             ipv4, ipv6 = proxmox_ve.GetVMIPAddresses(val[0], val[1])
+            
+            # message: VM info
             msg = f"VM Name: {status['name']}\nVMID: {status['vmid']}\nRegion: {val[0]}\nStatus: {status['status']}\nHost name: vm{status['vmid']}{config.DOMEIN}\nIPv4: {ipv4}\nIPv6: {ipv6}"
             
-            if self.mode == "delete":
-                try:
+            if self.mode == "delete": # mode: delete
+                
+                try: # Delete VM
+                    
+                    # message: Delete VM
                     await interaction.response.send_message(msg, ephemeral=True)
+                    
+                    # message: Do you want to delete this VM?
                     await interaction.followup.send("Do you want to delete this VM?\n(You must stop the VM before deleting it.)", ephemeral=True)
+                    
+                    # view: Confirm and Execute
                     await interaction.followup.send(view=ConfirmAndExecute("delete", "", "", "", "", val[0], val[1], config.TIME), ephemeral=True)
-                except Exception as e:
+                    
+                except Exception as e: # Delete Error
+                    
                     print(f"Delete Error: {e}")
-            elif self.mode == "info":
-                try:
+                
+            elif self.mode == "info": # mode: info
+                
+                try: # Show VM info
+                    
+                    # message: Show VM info
                     await interaction.response.send_message("What do you want to do with this VM?", ephemeral=True)
+                    
+                    # view: Operate VM power
                     await interaction.edit_original_response(content=msg, view=OperateVMPower(val[0], val[1], self.ctx, timeout=config.TIME))
-                except Exception as e:
+                
+                except Exception as e: # Show Info Error
+                    
                     print(f"Info Error: {e}")
-            else:
+                
+            else: # mode: unknown
+                
+                # message: Error
                 await interaction.response.send_message(f"{val[1]}\nError", ephemeral=True)
-        else:
+                
+        else: # Not the VM owner
+            
+            # message: You cannot operate this VM
             await interaction.response.send_message("You cannot operate this VM.", ephemeral=True)
 
-#---------------------------------------------------------------#
-# Set Cloud-init
+#------ Set Cloud-init --------------------------------------------------#
+# Set up the VM's cloud-init settings                                    #
+#------------------------------------------------------------------------#
+
 class SetCloudinit(Modal):
-    def __init__(self, vmnum, title: str) -> None:
+    
+    def __init__(self, vmnum, title: str) -> None: # Initialize the class
+        
+        # title: Configure Cloud-init settings
         super().__init__(title=title)
+        
+        # vmname
         self.vmname = []
-        for i in range(int(vmnum)):
-            self.vmname.append(TextInput(label=f"VM Name {i+1}", style=TextStyle.short, required=True))   # VM Name
+        
+        # clone_vm_id
+        for i in range(int(vmnum)): # VM Number
+            
+            # VM Name: TextInput
+            self.vmname.append(TextInput(label=f"VM Name {i+1}", style=TextStyle.short, required=True))
+            
+            # Add item
             self.add_item(self.vmname[i])
-        self.clone_vm_id = proxmox_ve.GetVMID()     # Clone VM ID
+        
+        # clone_vm_id: VM Template ID
+        self.clone_vm_id = proxmox_ve.GetVMID()
+    
     
     async def on_submit(self, interaction: Interaction) -> None:    # on_submit: Modalの送信ボタンが押されたときに呼び出される関数（on_submit以外の名前はエラー）
-        if self.clone_vm_id == None:
+        
+        if self.clone_vm_id == None: # Get VM ID failed.
+            
+            # message: Getting VM ID failed
             await interaction.response.send_message("Getting VM ID failed.", ephemeral=True)
             
             return 0
         
+        # Get user data
         userlist = await db.get_userdata(interaction.user.id)
         
-        if len(userlist) != 5:
+        if len(userlist) != 5: # User data not found.
+            
+            # message: User data not found
             await interaction.response.send_message("User data not found.", ephemeral=True)
             
             return 0
         
+        # init msg val
         msg = ""
-        for vmname in self.vmname:
+        
+        for vmname in self.vmname: # send message 
+            
+            # message: VM Name, User Name, Password, SSH Key
             msg += f"VM Name:\t{interaction.user.id}-{vmname}\nUser Name:\t{userlist[2]}\nPassword:\t||{userlist[3]}||\nSSH Key:\t||{userlist[4]}||\n"
+        
         msg += "\nDo you want to create this?"
         
         await interaction.response.send_message(msg, ephemeral=True)
@@ -509,7 +581,7 @@ class MainMenu(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
         else:
             for vm in self.VMList[:24]:
-                view.on_select.add_option(
+                view.SelectedVM.add_option(
                     label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",
                     value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}"
                 )
@@ -522,7 +594,7 @@ class MainMenu(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
         else:
             for vm in self.VMList[:24]:
-                view.on_select.add_option(
+                view.SelectedVM.add_option(
                     label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",
                     value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}"
                 )
