@@ -41,6 +41,8 @@ import proxmox_ve
 
 
 #------ Init variable ---------------------------------------------------#
+# Proxmox VE, region, template ID, and node                              #
+#------------------------------------------------------------------------#
 
 # Arguments
 ARGS = sys.argv
@@ -204,6 +206,7 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey):
         print("Invalid VM ID")
     
     else: # Create the VM instance
+        
         try: # Try to create the VM instance
             
             print(f"Creating VM...")
@@ -373,7 +376,6 @@ def GetVMIPAddresses(r, vmid):
         
         # Return the IPv4 and IPv6 addresses
         ipv4_addresses = []
-        
         ipv6_addresses = []
 
         # Get the IP addresses
