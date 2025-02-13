@@ -61,6 +61,25 @@ You can create VM templates by Ansible.
   - Region data
   - Discord bot token
   - Discord channel ID
-- Deploy on Docker
-  - `cd app`
-  - `docker compose  -f "docker_compose.yaml" up`
+
+### Docker
+
+- move `/app`
+
+```bash
+cd app
+```
+
+- Run Docker Compose command
+
+```bash
+docker compose  -f "docker-compose.yaml" up
+```
+
+### Kubernetes
+
+- Run s
+
+```bash
+docker build -t ghcr.io/cyokozai/terrakko:latest .
+```

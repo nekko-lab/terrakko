@@ -355,7 +355,7 @@ class OperateVMPower(View):
 # Selected your VM Name                                                  #
 #------------------------------------------------------------------------#
 
-class SelectVMNameMenu(View):
+class SelectVMNameTab(View):
     
     def __init__(self, mode, ctx, timeout=config.TIME): # Initialize the class
         
@@ -435,11 +435,11 @@ class SelectVMNameMenu(View):
             # message: You cannot operate this VM
             await interaction.response.send_message("You cannot operate this VM.", ephemeral=True)
 
-#------ Set Cloud-init --------------------------------------------------#
-# Set up the VM's cloud-init settings                                    #
+#------ Profile configuration -------------------------------------------#
+# Set up the VM's profile configuration                                  #
 #------------------------------------------------------------------------#
 
-class SetCloudinit(Modal):
+class ProfileConfigurationForm(Modal):
     
     def __init__(self, vmnum, title: str) -> None: # Initialize the class
         
@@ -462,7 +462,7 @@ class SetCloudinit(Modal):
         self.clone_vm_id = proxmox_ve.GetVMID()
     
     
-    async def on_submit(self, interaction: Interaction) -> None:    # on_submit: Modalの送信ボタンが押されたときに呼び出される関数（on_submit以外の名前はエラー）
+    async def on_submit(self, interaction: Interaction) -> None: # Modal: Submit button
         
         if self.clone_vm_id == None: # Get VM ID failed.
             
@@ -484,176 +484,362 @@ class SetCloudinit(Modal):
         # init msg val
         msg = ""
         
-        for vmname in self.vmname: # send message 
+        for vmname in self.vmname: # send message
             
             # message: VM Name, User Name, Password, SSH Key
             msg += f"VM Name:\t{interaction.user.id}-{vmname}\nUser Name:\t{userlist[2]}\nPassword:\t||{userlist[3]}||\nSSH Key:\t||{userlist[4]}||\n"
         
         msg += "\nDo you want to create this?"
         
+        # message: Creating VM instance information (VM Name, User Name, Password, SSH Key)
         await interaction.response.send_message(msg, ephemeral=True)
+        
+        # view: Confirm and Execute
         confirm_view = ConfirmAndExecute(
-            "create",
-            self.vmname,
-            userlist[2],
-            userlist[3],
-            userlist[4],
-            "",
-            self.clone_vm_id
+                                         
+            "create",        # mode: create
+            
+            self.vmname,     # vmname: VM Name
+            
+            userlist[2],     # ciname: User Name
+            
+            userlist[3],     # cipass: Password
+            
+            userlist[4],     # sshkey: SSH Key
+            
+            "",              # region
+            
+            self.clone_vm_id # vmid: VM Template ID
+            
         )
+        
+        # message: Confirm and Execute
         await interaction.followup.send(view=confirm_view, ephemeral=True)
     
-    async def on_error(self, interaction: Interaction, error: Exception) -> None:
-        print("error: SetCloudinit")
-        await interaction.response.send_message("Error: SetCloudinit", ephemeral=True)
-
-    async def on_timeout(self) -> None:
-        print("on timeout: SetCloudinit")
-
-#---------------------------------------------------------------#
-# Set User Data
-class SetUserData(Modal):
-    def __init__(self, ctx, userdata, title: str) -> None:
-        super().__init__(title=title)
-        self.ctx = ctx
-        self.ciname = TextInput(label="User Name", style=TextStyle.short, default=userdata[2], required=False)   # User Name
-        self.add_item(self.ciname)
-        self.cipass = TextInput(label="Password", style=TextStyle.short, default=userdata[3], required=False)    # Password
-        self.add_item(self.cipass)
-        self.sshkey = TextInput(label="SSH Key", style=TextStyle.short, default=userdata[4], required=False)     # SSH Key
-        self.add_item(self.sshkey)
     
-    async def on_submit(self, interaction: Interaction) -> None:    # on_submit: Modalの送信ボタンが押されたときに呼び出される関数（on_submit以外の名前はエラー）
-        if len(self.ciname.value) == 0 or len(self.cipass.value) == 0 or len(self.sshkey.value) == 0:
+    async def on_error(self, interaction: Interaction, error: Exception) -> None: # Modal: Error
+        
+        # message: Error
+        print("error: ProfileConfigurationForm")
+        
+        await interaction.response.send_message("Error: ProfileConfigurationForm", ephemeral=True)
+
+    
+    async def on_timeout(self) -> None: # Modal: Timeout
+        
+        # message: Timeout
+        print("on timeout: ProfileConfigurationForm")
+
+#------ Set User info ---------------------------------------------------#
+# Set User info                                                          #
+#------------------------------------------------------------------------#
+
+class SetUserInfoForm(Modal):
+    
+    def __init__(self, ctx, userdata, title: str) -> None: # Initialize the class
+        
+        # title: Configure your info
+        super().__init__(title=title)
+        
+        # ctx: context
+        self.ctx = ctx
+        
+        # ciname: User Name
+        self.ciname = TextInput(label="User Name", style=TextStyle.short, default=userdata[2], required=False)
+        
+        self.add_item(self.ciname) # Add item
+        
+        # cipass: Password
+        self.cipass = TextInput(label="Password", style=TextStyle.short, default=userdata[3], required=False)
+        
+        self.add_item(self.cipass) # Add item
+        
+        # sshkey: SSH Key
+        self.sshkey = TextInput(label="SSH Key", style=TextStyle.short, default=userdata[4], required=False)
+        
+        self.add_item(self.sshkey) # Add item
+    
+    
+    async def on_submit(self, interaction: Interaction) -> None: # Modal: Submit button
+        
+        if len(self.ciname.value) == 0 or len(self.cipass.value) == 0 or len(self.sshkey.value) == 0: # Invalid input.
+            
+            # message: Invalid input
             await interaction.response.send_message("Invalid input.", ephemeral=True)
-        else:
+            
+        else: # Valid input.
+            
+            # message: User Name, Password, SSH Key
             await interaction.response.send_message(f"User Name:\t{self.ciname}\nPassword:\t||{self.cipass}||\nSSH Key:\t||{self.sshkey}||\n\nDo you want to save this?", ephemeral=True)
+            
+            # view: Confirm and Execute
             confirm_view = ConfirmAndExecute(
-                "userdata",
-                "",
-                self.ciname.value,
-                self.cipass.value,
-                self.sshkey.value,
-                "",
-                ""
+                
+                "userdata",        # mode: userdata
+                
+                "",                # vmname
+                
+                self.ciname.value, # ciname: User Name
+                
+                self.cipass.value, # cipass: Password
+                
+                self.sshkey.value, # sshkey: SSH Key
+                
+                "",                # region
+                
+                ""                 # vmid
+                
             )
+            
+            # message: Confirm and Execute
             await interaction.followup.send(view=confirm_view, ephemeral=True)
     
-    async def on_error(self, interaction: Interaction, error: Exception) -> None:
-        print("error: SetUserData")
-        await interaction.response.send_message("Error: SetUserData", ephemeral=True)
     
-    async def on_timeout(self) -> None:
-        print("on timeout: SetUserData")
+    async def on_error(self, interaction: Interaction, error: Exception) -> None: # Modal: Error
+        
+        # message: Error
+        print("error: SetUserInfoForm")
+        
+        await interaction.response.send_message("Error: SetUserInfoForm", ephemeral=True)
+    
+    
+    async def on_timeout(self) -> None: # Modal: Timeout
+        
+        # message: Timeout
+        print("on timeout: SetUserInfoForm")
 
-#---------------------------------------------------------------#
-# Select VM Number
-class SelectVMNumber(View):
-    def __init__(self, ctx, timeout=config.TIME):
+#------ Select VM number ------------------------------------------------#
+# Select VM Number                                                       #
+#------------------------------------------------------------------------#
+
+class SelectVMNumberTab(View):
+    
+    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # ctx: context
         self.ctx = ctx
     
+    
+    # UI: Select VM
     @discord.ui.select(
-        cls=discord.ui.Select,
-        placeholder="How many VMs do you want to create?",
-        options=[discord.SelectOption(label=f"{i+1}", value=f"{i+1}") for i in range(0, 5)]
-    )
-    async def cisetting(self, interaction: discord.Interaction, select: discord.ui.Select):
-        await interaction.response.send_modal(SetCloudinit(select.values[0], "Configure Cloud-init settings."))
+        
+        cls=discord.ui.Select,                                                              # UI: Select VM
+        
+        placeholder="How many VMs do you want to create?",                                  # UI: Placeholder
+        
+        options=[discord.SelectOption(label=f"{i+1}", value=f"{i+1}") for i in range(0, 5)] # UI: Options
 
-#---------------------------------------------------------------#
-# Menu
+    )
+    
+    async def CallModal(self, interaction: discord.Interaction, select: discord.ui.Select): # Function: Call Modal
+        
+        # message: Configure your profile
+        await interaction.response.send_modal(ProfileConfigurationForm(select.values[0], "Configure your profile."))
+
+#------ Main menu -------------------------------------------------------#
+# Main menu                                                              #
+#------------------------------------------------------------------------#
+
 class MainMenu(View):
-    def __init__(self, ctx, timeout=config.TIME):
+    
+    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # ctx: context
         self.ctx = ctx
+        
+        # VM List
         self.VMList = proxmox_ve.GetNodeVM(self.ctx.author.id)
     
-    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
-    async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await interaction.response.send_message(f"User: {self.ctx.author.name}\nCreate VM.", ephemeral=True)
-        await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumber(self.ctx, timeout=config.TIME))
     
+    # UI: Create VM
+    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
+    
+    async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
+        
+        # message: Create VM
+        await interaction.response.send_message(f"User: {self.ctx.author.name}\nCreate VM.", ephemeral=True)
+        
+        # View: Select VM Number
+        await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumberTab(self.ctx, timeout=config.TIME))
+    
+    
+    # UI: Show VM info
     @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
-    async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        view = SelectVMNameMenu("info", self.ctx, timeout=config.TIME)
-        if len(self.VMList) == 0:
+    
+    async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
+        
+        # View: Select VM Name
+        view = SelectVMNameTab("info", self.ctx, timeout=config.TIME)
+        
+        if len(self.VMList) == 0: # No VMs found.
+            
+            # message: No VMs found
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
-        else:
-            for vm in self.VMList[:24]:
+            
+        else: # VMs found.
+            
+            for vm in self.VMList[:24]: # Show VM info
+                
+                # VM Name, VM ID, Status, Region
                 view.SelectedVM.add_option(
-                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",
-                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}"
+                    
+                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
+                    
+                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
+                    
                 )
+            
+            # message: Show VM information
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nShow VM info.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
     
+    
+    # UI: Delete VM
     @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
-    async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        view = SelectVMNameMenu("delete", self.ctx, timeout=config.TIME)
-        if len(self.VMList) == 0:
+    
+    async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
+        
+        # View: Select VM Name
+        view = SelectVMNameTab("delete", self.ctx, timeout=config.TIME)
+        
+        if len(self.VMList) == 0: # No VMs found.
+            
+            # message: No VMs found
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
-        else:
-            for vm in self.VMList[:24]:
+            
+        else: # VMs found.
+            
+            for vm in self.VMList[:24]: # Delete VM
+                
+                # VM Name, VM ID, Status, Region
                 view.SelectedVM.add_option(
-                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",
-                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}"
+                    
+                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
+                    
+                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
+                    
                 )
+            
+            # message: Delete VM
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
     
+    
+    # UI: Configure your info
     @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
-    async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await interaction.response.send_modal(SetUserData(self.ctx, await db.get_userdata(self.ctx.author.id), "Configure your info."))
+    
+    async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
+        
+        # message: Configure your info
+        await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(self.ctx.author.id), "Configure your info."))
 
-#---------------------------------------------------------------#
-# Ready
+#------ Bot Ready -------------------------------------------------------#
+# Bot is ready                                                           #
+#------------------------------------------------------------------------#
+
+# Bot event: on_ready
 @bot.event
-async def on_ready():
+
+async def on_ready(): # Bot is ready
+    
     await asyncio.sleep(1)
     
+    # Print the logo and version
     print(config.LOGO)
+    
     print(f"Nekko Cloud: {config.version}")
+    
     print('Nekko Cloud\'s VM is available!')
 
-#---------------------------------------------------------------#
-# Show menu command
+#------ Call Menu -------------------------------------------------------#
+# Show menu command                                                      #
+#------------------------------------------------------------------------#
+
+# Show Menu command on Discord
 @bot.command(name="!", description="Linuxコマンドを受け取り、チャンネルに表示します", ephemeral=True)
-async def menu(ctx):
+
+async def ShowMenu(ctx): # Show Menu command
+    
+    # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
     
-    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]:
+    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+        
+        # message: Hi {ctx.author.name}
         await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
-    else:
+        
+    else: # User data not found
+        
+        # message: Create user data
         await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
+        
+        # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
+    # message: Create VM, Delete VM, Show info
     await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete a VM\nShow info:\tShow VM information\n\nPowered by Nekko Cloud {config.version}", ephemeral=True)
+    
+    # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
-#---------------------------------------------------------------#
-# Delete Database
+#------ Delete Database -------------------------------------------------#
+# Delete Database                                                        #
+#------------------------------------------------------------------------#
+
 class DeleteDB(View):
-    def __init__(self, ctx, timeout=config.TIME):
+    
+    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
         super().__init__(timeout=timeout)
+        
+        # ctx: context
         self.ctx = ctx
     
+    
+    # UI: Yes button
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes")
-    async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None:
+    
+    async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
+        
+        # Delete user data
         db.delete_database()
+        
+        # message: User data deleted
         interaction.response.send_message("User data deleted", ephemeral=True)
     
+    
+    # UI: No button
     @discord.ui.button(label="No", style=discord.ButtonStyle.red, custom_id="no")
-    async def no(self, interaction: discord.Interaction, button: discord.Button) -> None:
+    
+    async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
+        
+        # message: Canceled
         interaction.response.send_message("Canceled", ephemeral=True)
 
-#---------------------------------------------------------------#
-# Delete Database command
+#------ Call database menu ----------------------------------------------#
+# Delete Database command                                                #
+#------------------------------------------------------------------------#
+
+# Delete Database command on Discord
 @bot.command(name="delete.db", description="Delete user data", ephemeral=True)
-async def delete_db(ctx):
+
+
+async def delete_db(ctx): # Delete Database command
+    
+    # message: Delete user data
     ctx.send("Delete user data", ephemeral=True)
+    
+    # View: Delete Database
     ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
 
-#---------------------------------------------------------------#
-# Start Bot
+#------ Start Bot -------------------------------------------------------#
+
+# Run the bot
 bot.run(config.DIS_TOKEN)
 
-#---------------------------------------------------------------#
+#------------------------------------------------------------------------#
