@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-c"]
 ARG lang
 ARG dir
 
-ENV DEBIAN_FRONTEND = noninter active
+ENV DEBIAN_FRONTEND noninteractive
 ENV LANG ${lang}
 
 WORKDIR /root/${dir}

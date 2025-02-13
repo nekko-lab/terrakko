@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 ##########################################################################
-#                                                    _                   #
-#        _____  _____ ____  ____  ____  _  __ _  __ |_\_                 #
-#       /__ __\/  __//  __\/  __\/  _ \/ |/ // |/ //\_  \_               #
-#         / \  |  \  |  \/||  \/|| /_\||   / |   /|_  \_  \              #
-#         | |  |  /_ |    /|    /| | |||   \ |   \| \_  \__|             #
-#         \_/  \____\\_/\_\\_/\_\\_/ \/\_|\_\\_|\_\\__\___/              #
+#                                                       _                #
+#           _____  _____ ____  ____  ____  _  __ _  __ |_\_              #
+#          /__ __\/  __//  __\/  __\/  _ \/ |/ // |/ //\_  \_            #
+#            / \  |  \  |  \/||  \/|| /_\||   / |   /|_  \_  \           #
+#            | |  |  /_ |    /|    /| | |||   \ |   \| \_  \__|          #
+#            \_/  \____\\_/\_\\_/\_\\_/ \/\_|\_\\_|\_\\__\___/           #
 #                                                                        #
 ##########################################################################
 
@@ -313,7 +313,7 @@ class OperateVMPower(View):
     
     @discord.ui.button(label="Reboot", style=discord.ButtonStyle.blurple, custom_id="reboot") # UI: Reboot button
     
-    async def ReOperateVMPower(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Reboot VM
+    async def RebootVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Reboot VM
         
         # Update the VM status
         await self.UpdateVMStatus()
@@ -834,7 +834,6 @@ class DeleteDB(View):
 
 # Delete Database command on Discord
 @bot.command(name="delete.db", description="Delete user data", ephemeral=True)
-
 
 async def delete_db(ctx): # Delete Database command
     
