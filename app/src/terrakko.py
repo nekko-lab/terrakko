@@ -75,8 +75,14 @@ bot = commands.Bot(
 #------------------------------------------------------------------------#
 
 async def WaitForTaskCompletion(interaction, vmid, task):
+    
+    # Task status
     data = {"status": ""}
+    
+    # Wait for task completion
     await asyncio.sleep(10)
+    
+    # VM status
     vm_status = ""
     
     if task == "create": # task: create
@@ -138,6 +144,7 @@ async def WaitForTaskCompletion(interaction, vmid, task):
             await asyncio.sleep(5)
             
             continue
+    
     
     # Task completed
     await interaction.followup.send("Tasks completed", ephemeral=True)
