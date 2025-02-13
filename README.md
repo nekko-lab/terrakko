@@ -58,19 +58,21 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
   | [`requests`](https://requests.readthedocs.io/en/latest/)| 2.32.3       |
   | [`urllib3`](https://urllib3.readthedocs.io/en/stable/)| 2.2.3        |
 
-## Architecture
-
-- [Link](architecture.md)
-
 ## Config
 
 - [Link](config.md)
+
+## Architecture
+
+![flowchart](images/flowchart.png)
 
 ---
 
 ## How to setup this?
 
 - [Link](setup.md)
+
+---
 
 ## How to use this?
 
@@ -93,7 +95,7 @@ You can register information about your VM
 
 - Entry your user name, password, ssh key and send the form
 
-## Create your VM
+### Create your VM
 
 - Click `Create your VM`
 - Select the number of VM (1 ~ 5)
@@ -106,7 +108,7 @@ You can register information about your VM
   - Click `Yes`: Create VM
   - Click `No`: Cancel
 
-## Operate your VM
+### Operate your VM
 
 - Click `Show VM info`
 - Select VM (You can only view your own VMs.)
@@ -119,7 +121,7 @@ You can register information about your VM
 - Click `Reboot`
 - Click `Stop`
 
-## Delete your VM
+### Delete your VM
 
 - Click `Delete VM`
 - Select VM (You can only view your own VMs.)
@@ -131,4 +133,4 @@ You can register information about your VM
 
 ## Contact Us
 
-- 
+- <networkcontentslab@gmail.com>
