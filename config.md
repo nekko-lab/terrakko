@@ -18,7 +18,7 @@
 
 ## Config
 
-- `DOMEIN`: Host name of VM
+- `DOMAIN`: Host name of VM
 - `TIME`: Timeout (in seconds)
 
 ## Database
