@@ -35,7 +35,7 @@ LOGO = """
 """
 
 # Domain name
-DOMEIN = os.getenv("DOMEIN")
+DOMAIN = os.getenv("DOMAIN")
 
 # Timeout
 TIME = 180

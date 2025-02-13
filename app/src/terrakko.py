@@ -263,7 +263,9 @@ class OperateVMPower(View):
         # Get VM status
         self.status = await proxmox_ve.GetVMStatus(self.region, self.vmid)
     
-    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="start") # UI: Start button
+    
+    # UI: Start button
+    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="start")
     
     async def StartVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start VM
         
@@ -398,8 +400,8 @@ class SelectVMNameTab(View):
             # Get VM IP addresses
             ipv4, ipv6 = proxmox_ve.GetVMIPAddresses(val[0], val[1])
             
-            # message: VM info
-            msg = f"VM Name: {status['name']}\nVMID: {status['vmid']}\nRegion: {val[0]}\nStatus: {status['status']}\nHost name: vm{status['vmid']}{config.DOMEIN}\nIPv4: {ipv4}\nIPv6: {ipv6}"
+            # message: Show VM info
+            msg = f"VM Name: {status['name']}\nVMID: {status['vmid']}\nRegion: {val[0]}\nStatus: {status['status']}\nHost name: vm{status['vmid']}{config.DOMAIN}\nIPv4: {ipv4}\nIPv6: {ipv6}"
             
             if self.mode == "delete": # mode: delete
                 
@@ -767,7 +769,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Linuxコマンドを受け取り、チャンネルに表示します", ephemeral=True)
+@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
 
 async def ShowMenu(ctx): # Show Menu command
     
@@ -776,7 +778,7 @@ async def ShowMenu(ctx): # Show Menu command
     
     if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
-        # message: Hi {ctx.author.name}
+        # message: Hi $USER
         await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
         
     else: # User data not found
@@ -788,7 +790,7 @@ async def ShowMenu(ctx): # Show Menu command
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
     # message: Create VM, Delete VM, Show info
-    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete a VM\nShow info:\tShow VM information\n\nPowered by Nekko Cloud {config.version}", ephemeral=True)
+    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)

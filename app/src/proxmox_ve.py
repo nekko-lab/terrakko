@@ -209,9 +209,9 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey):
         
         try: # Try to create the VM instance
             
-            print(f"Creating VM...")
+            print("Creating VM...")
             print(f"VM ID: {clone_vm_id}\tVM Name: {vm_name}")
-            print(f"Cloning VM...")
+            print("Cloning VM...")
             
             # Set the VM status to clone
             clone_task = node.qemu(temp_id).clone.create(newid=clone_vm_id, name=vm_name, pool='dev')
