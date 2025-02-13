@@ -25,11 +25,12 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 ## Requirements
 
 ### Tools
-  - `GCC`: 12.2.0 (Debian 12.2.0-14)
-  - `pip`: 24.2 (Python3.11)
-  - `libsqlite3-dev`: 3.46.1-1
-  - `Cloud-init`: 24.1.3-0 ubuntu1~22.04.5
-  - [ubuntu22.04server-cloudimg](https://cloud-images.ubuntu.com/releases/22.04/release/)
+
+- `GCC`: 12.2.0 (Debian 12.2.0-14)
+- `pip`: 24.2 (Python3.11)
+- `libsqlite3-dev`: 3.46.1-1
+- `Cloud-init`: 24.1.3-0 ubuntu1~22.04.5
+- [ubuntu22.04server-cloudimg](https://cloud-images.ubuntu.com/releases/22.04/release/)
 
 ### Proxmox VE Privileges
 
