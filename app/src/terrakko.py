@@ -401,7 +401,7 @@ class SelectVMNameTab(View):
             ipv4, ipv6 = proxmox_ve.GetVMIPAddresses(val[0], val[1])
             
             # message: Show VM info
-            msg = f"VM Name: {status['name']}\nVMID: {status['vmid']}\nRegion: {val[0]}\nStatus: {status['status']}\nHost name: vm{status['vmid']}{config.DOMAIN}\nIPv4: {ipv4}\nIPv6: {ipv6}"
+            msg = f"VM Name: `{status['name']}`\nVMID: {status['vmid']}\nRegion: {val[0]}\nStatus: {status['status']}\nHost name: \n```bash\nvm{status['vmid']}{config.DOMAIN}\n```\nIPv4: {ipv4}\nIPv6: {ipv6}"
             
             if self.mode == "delete": # mode: delete
                 
