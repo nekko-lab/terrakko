@@ -705,7 +705,7 @@ class MainMenu(View):
                 )
             
             # message: Show VM information
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nShow VM info.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
+            await interaction.response.send_message(f"User: {self.ctx.author.name}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
     
     
     # UI: Delete VM
@@ -790,7 +790,7 @@ async def ShowMenu(ctx): # Show Menu command
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
     # message: Create VM, Delete VM, Show info
-    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
