@@ -109,11 +109,13 @@ You can register information about your VM
   ![Modal: Create your VM](images/image3.png)
 
 - Confirm the VM information
+
+  ![Operate](images/image4.png)
+
   - Click `Yes`: Create VM
   - Click `No`: Cancel
 
-![Operate](images/image4.png)
-![Operate](images/image5.png)
+    ![Operate](images/image5.png)
 
 ### Operate your VM
 
