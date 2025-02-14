@@ -121,7 +121,7 @@ You can register information about your VM
 - Select VM (You can only view your own VMs.)
 - Terrakko responses you the operate menu
 
-  ![Operate](images/image5.png)
+  ![Operate](images/image.png)
 
 - Click `Start`
 - Click `Shutdown`
