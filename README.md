@@ -110,10 +110,10 @@ You can register information about your VM
 
 - Confirm the VM information
 
-  ![Operate](images/image4.png)
+  ![Operate](imate VM
+  - Click `No`: Cancelages/image4.png)
 
-  - Click `Yes`: Create VM
-  - Click `No`: Cancel
+  - Click `Yes`: Cre
 
     ![Operate](images/image5.png)
 
