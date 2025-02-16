@@ -110,10 +110,10 @@ You can register information about your VM
 
 - Confirm the VM information
 
-  ![Operate](imate VM
-  - Click `No`: Cancelages/image4.png)
+  ![Operate](images/image4.png)
 
-  - Click `Yes`: Cre
+  - Click `Yes`: Create VM
+  - Click `No`: Cancel
 
     ![Operate](images/image5.png)
 
@@ -123,9 +123,10 @@ You can register information about your VM
 - Select VM (You can only view your own VMs.)
 - Terrakko responses you the operate menu
 
-  ![Operate](images/image.png)
+  ![Operate](images/image0.png)
 
 - Click `Start`
+  - 
 - Click `Shutdown`
 - Click `Reboot`
 - Click `Stop`
