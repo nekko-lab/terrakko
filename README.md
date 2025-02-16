@@ -101,7 +101,7 @@ You can register information about your VM
 - Click `Create your VM`
 - Select the number of VM (1 ~ 5)
 
-  ![Modal: Configure your info](images/image2.png)
+  ![Modal: Select number](images/image2.png)
 
 - Pop up the form (ex Select 5)
 - Enter VM name and send the form
