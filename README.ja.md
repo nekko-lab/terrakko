@@ -46,7 +46,7 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
   - `@terrakko !`: メンション + 空白 + !
   - `trk!`: trk + !  
 
-    ![image1.png](/attachment/67b055425b321b5acf746a96)
+    ![image1.png](/images/image1.png)
 
 - 各操作のセッションは180秒なのでセッションが切れた場合は再度コマンドを送信してください．
 
@@ -55,7 +55,7 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
 - メニューから `Configure your info` ボタンをクリックする
 - 入力フォームが表示されるので，指定の情報を入力する[^1]  
 
-    ![image2.png](/attachment/67b0550f5b321b5acf746a34)
+    ![image2.png](/images/image2.png)
 
 [^1]: 後から情報の変更を行う際も同様の手順で可能です
 
@@ -64,20 +64,20 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
 - `Create your VM` をクリック
 - VMの個数を選択[^2]  
 
-    ![image3.png](/attachment/67b177355b321b5acf749740)
+    ![image3.png](/images/image3.png)
 
 - VMの名前を入力する 
     
-    ![image4.png](/attachment/67b178cf5b321b5acf749822)
+    ![image4.png](/images/image4.png)
 
 - 作成されるVMの情報を確認する  
 
-  ![image5.png](/attachment/67b1c7965b321b5acf74b3ae)
+  ![image5.png](/images/image5.png)
 
   - `Yes`: VMを作成  
   - `No`:  キャンセル  
 
-    ![image6.png](/attachment/67b1c7965b321b5acf74b3a9)
+    ![image6.png](/images/image6.png)
 
 [^2]: 一度に作成できるVMの最大数は5個までです
 
@@ -88,7 +88,7 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
   - 表示されるVMはdev環境に存在するユーザ (ここではcyokozai) のVM  
   - 試しに先ほど作成した `test` VMを選択する  
 
-    ![image7.png](/attachment/67b2bed25b321b5acf74e1fd)
+    ![image7.png](/images/image7.png)
 
 - 選択したVMの情報とVMの電源に関するボタンが表示される
   - 表示される情報は以下の通り  
@@ -108,7 +108,7 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
         `Reboot`: VMを再起動する (Status: runningの場合のみ)
         `Stop`: VMを強制的に停止する [^3] (Status: runningの場合のみ)
 
-    ![image8.png](/attachment/67b2d46c5b321b5acf74ee56)
+    ![image8.png](/images/image8.png)
 
 [^3]: `Stop` は正常終了ではないため，通常は `Shutdown` の使用を推奨する  
 
@@ -119,14 +119,14 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
   - 表示されるVMはdev環境に存在するユーザ (ここではcyokozai) のVM  
   - 試しに先ほど作成した `test` VMを選択する  
 
-    ![image9.png](/attachment/67b2dbe75b321b5acf74f285)
+    ![image9.png](/images/image9.png)
 
 - 選択したVMの情報が表示される
 
-    ![image8.png](/attachment/67b2d46c5b321b5acf74ee56)
+    ![image8.png](/images/image8.png)
 
 - VMの削除を実行するか最終確認を行う
   - `Yes`: VMを削除  
   - `No`:  キャンセル  
 
-    ![image9.png](/attachment/67b2dd065b321b5acf74f3e6)
+    ![image10.png](/images/image10.png)
