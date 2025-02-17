@@ -126,7 +126,6 @@ You can register information about your VM
   ![Operate](images/image0.png)
 
 - Click `Start`
-  - 
 - Click `Shutdown`
 - Click `Reboot`
 - Click `Stop`
