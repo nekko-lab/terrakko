@@ -46,6 +46,8 @@ You can create VM templates by Ansible.
 
 - [nekko-cloud](https://github.com/nekko-lab/nekko-cloud/tree/5eb88569918a52e2e92dccbc407bc39ed353c473/iaas/cloudinit)
 
+
+
 ## Discord
 
 - Make a Terrakko channel
@@ -76,10 +78,4 @@ cd app
 docker compose  -f "docker-compose.yaml" up
 ```
 
-### Kubernetes
-
-- Run s
-
-```bash
-docker build -t ghcr.io/cyokozai/terrakko:latest .
-```
+### ~~Kubernetes~~

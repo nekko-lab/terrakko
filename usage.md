@@ -2,18 +2,6 @@
 
 <img align="right" src="./logos/terrakko_icon.png" alt="Terrakko logo" width=250cm>
 
-Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Discord.
-
-```text
-                                              _  
-  _____  _____ ____  ____  ____  _  __ _  __ |_\_  
- /__ __\/  __//  __\/  __\/  _ \/ |/ // |/ //\_  \_  
-   / \  |  \  |  \/||  \/|| /_\||   / |   /|_  \_  \  
-   | |  |  /_ |    /|    /| | |||   \ |   \| \_  \__|  
-   \_/  \____\\_/\_\\_/\_\\_/ \/\_|\_\\_|\_\\__\___/  
-  
-```
-
 ---
 
 ## 目次
@@ -74,7 +62,7 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
 
   ![image5.png](/images/image5.png)
 
-  - `Yes`: VMを作成  
+  - `Yes`: VMを作成
   - `No`:  キャンセル  
 
     ![image6.png](/images/image6.png)

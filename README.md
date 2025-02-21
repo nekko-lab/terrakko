@@ -22,6 +22,8 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
   - Debian GNU/Linux 12 bookworm
   - [Python:3.11](https://hub.docker.com/_/python/)
 
+---
+
 ## Requirements
 
 ### Tools
@@ -59,14 +61,6 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
   | [`requests`](https://requests.readthedocs.io/en/latest/)| 2.32.3       |
   | [`urllib3`](https://urllib3.readthedocs.io/en/stable/)| 2.2.3        |
 
-## Config
-
-- [Link](config.md)
-
-## Architecture
-
-![flowchart](images/flowchart.png)
-
 ---
 
 ## How to setup this?
@@ -77,66 +71,17 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 
 ## How to use this?
 
-### Basic usage
+- [Link](usage.md)
 
-- Move to Terrakko channel on Discord
-- Send message `@terrakko !` or `trk!`
-- Terrakko responses you the operate menu
+---
 
-  ![Menu](images/image1.png)
+## Config
 
-### Configure your info
+- [Link](config.md)
 
-You can register information about your VM  
+## Architecture
 
-- Click `Configure your info`
-- Pop up the form
-
-  ![Modal: Configure your info](images/image.png)
-
-- Entry your user name, password, ssh key and send the form
-
-### Create your VM
-
-- Click `Create your VM`
-- Select the number of VM (1 ~ 5)
-
-  ![Modal: Select number](images/image2.png)
-
-- Pop up the form (ex Select 5)
-- Enter VM name and send the form
-
-  ![Modal: Create your VM](images/image3.png)
-
-- Confirm the VM information
-
-  ![Operate](images/image4.png)
-
-  - Click `Yes`: Create VM
-  - Click `No`: Cancel
-
-    ![Operate](images/image5.png)
-
-### Operate your VM
-
-- Click `Show VM info`
-- Select VM (You can only view your own VMs.)
-- Terrakko responses you the operate menu
-
-  ![Operate](images/image0.png)
-
-- Click `Start`
-- Click `Shutdown`
-- Click `Reboot`
-- Click `Stop`
-
-### Delete your VM
-
-- Click `Delete VM`
-- Select VM (You can only view your own VMs.)
-- Confirm the VM
-  - Click `Yes`: Delete VM
-  - Click `No`: Cancel
+![flowchart](images/flowchart.png)
 
 ---
 
