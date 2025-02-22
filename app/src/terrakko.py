@@ -769,7 +769,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.tree.command(name="!")
+@bot.tree.command(name="hi")
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
@@ -834,7 +834,7 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@bot.command(name="delete.db", description="Delete user data", ephemeral=True)
+@bot.command(name="delete_db", description="Delete user data", ephemeral=True)
 
 async def delete_db(ctx): # Delete Database command
     
