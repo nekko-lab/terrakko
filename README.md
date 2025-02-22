@@ -34,7 +34,7 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 - `Cloud-init`: 24.1.3-0 ubuntu1~22.04.5
 - [ubuntu22.04server-cloudimg](https://cloud-images.ubuntu.com/releases/22.04/release/)
 
-### Proxmox VE Privileges
+### Proxmox VE Privileges (TerrakkoAccess)
 
   | Privileges                | Details                                                 |
   | ------------------------- | ------------------------------------------------------- |
