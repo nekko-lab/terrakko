@@ -769,31 +769,30 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
-
-async def ShowMenu(ctx): # Show Menu command
+@bot.tree.command(name="!")
+async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
     
-    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+    if interaction.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
         # message: Hi $USER
-        await ctx.response.send_message(f"Hi {ctx.author.name}!", ephemeral=True)
+        await interaction.response.send_message(f"Hi {interaction.user.name}!", ephemeral=True)
         
     else: # User data not found
         
         # message: Create user data
-        await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
+        await db.insert_data(interaction.user.id, "ncadmin", config.PVE_PASS, "")
         
         # message: Nice to meet you!
-        await ctx.response.send_message(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
+        await interaction.response.send_message(f"{interaction.user.name}, Nice to meet you!", ephemeral=True)
     
     # message: Create VM, Delete VM, Show info
-    await ctx.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
-    await ctx.response.send_message(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+    await interaction.response.send_message(view=MainMenu(interaction, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
