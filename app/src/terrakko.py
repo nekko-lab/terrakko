@@ -155,9 +155,47 @@ async def WaitForTaskCompletion(interaction, vmid, task):
     # Task completed
     await interaction.followup.send("Tasks completed", ephemeral=True)
 
-#------ Confirm and execute ------------------------------------#
-# Confirm and Execute the task (Create, Delete, UserData)       #
-#---------------------------------------------------------------#
+#------ Bot Ready -------------------------------------------------------#
+# Bot is ready                                                           #
+#------------------------------------------------------------------------#
+
+# Bot event: on_ready
+@bot.event
+
+async def on_ready(): # Bot is ready
+    global now_user_id, now_operate_user_id
+    
+    await asyncio.sleep(1)
+    
+    # Print the logo and version
+    print(config.LOGO)
+    
+    print(f"Nekko Cloud: {config.version}")
+    
+    print('Nekko Cloud\'s VM is available!')
+    
+    # Initialize Discord user variables
+    now_user_id = ""
+    
+    now_operate_user_id = ""
+
+#------ Bot Interaction -------------------------------------------------#
+# Bot interaction                                                        #
+#------------------------------------------------------------------------#
+
+# Bot event: on interaction
+@bot.event
+
+async def on_interaction(interaction: discord.Interaction): # Bot interaction
+    global now_operate_user_id
+    
+    now_operate_user_id = interaction.user.id
+    
+    print(f"{now_operate_user_id} is now operating {interaction.data}")
+
+#------ Confirm and execute ---------------------------------------------#
+# Confirm and Execute the task (Create, Delete, UserData)                #
+#------------------------------------------------------------------------#
 
 class ConfirmAndExecute(View):
     
@@ -783,44 +821,6 @@ class MainMenu(View):
             
             # message: Illegal operation
             await interaction.response.send_message(f"ERROR: You are not {now_user_id}!", ephemeral=True)
-    
-#------ Bot Ready -------------------------------------------------------#
-# Bot is ready                                                           #
-#------------------------------------------------------------------------#
-
-# Bot event: on_ready
-@bot.event
-
-async def on_ready(): # Bot is ready
-    global now_user_id, now_operate_user_id
-    
-    await asyncio.sleep(1)
-    
-    # Print the logo and version
-    print(config.LOGO)
-    
-    print(f"Nekko Cloud: {config.version}")
-    
-    print('Nekko Cloud\'s VM is available!')
-    
-    # Initialize Discord user variables
-    now_user_id = ""
-    
-    now_operate_user_id = ""
-
-#------ Bot Interaction -------------------------------------------------#
-# Bot interaction                                                        #
-#------------------------------------------------------------------------#
-
-# Bot event: on interaction
-@bot.event
-
-async def on_interaction(interaction: discord.Interaction): # Bot interaction
-    global now_operate_user_id
-    
-    now_operate_user_id = interaction.user.id
-    
-    print(f"{now_operate_user_id} is now operating {interaction.data}")
 
 #------ Call Menu -------------------------------------------------------#
 # Show menu command                                                      #
