@@ -696,6 +696,27 @@ class SelectVMNumberTab(View):
 # Main menu                                                              #
 #------------------------------------------------------------------------#
 
+class StartButton(View):
+    
+    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
+        super().__init__(timeout=timeout)
+        
+        # ctx: context
+        self.ctx = ctx
+    
+    
+    # UI: Start button
+    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="goto_mainmenu")
+    
+    async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start
+        
+        # message: Start
+        await interaction.response.send_message(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+
+#------------------------------------------------------------------------#
+
 class MainMenu(View):
     
     def __init__(self, ctx, timeout=config.TIME): # Initialize the class
@@ -716,18 +737,11 @@ class MainMenu(View):
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
         global now_user_id, now_operate_user_id
         
-        if now_user_id == now_operate_user_id: # User data found    
-            
-            # message: Create VM
-            await interaction.response.send_message(f"User: {now_user_id}\nCreate VM.", ephemeral=True)
-            
-            # View: Select VM Number
-            await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumberTab(self.ctx, timeout=config.TIME))
+        # message: Create VM
+        await interaction.response.send_message(f"User: {now_user_id}\nCreate VM.", ephemeral=True)
         
-        else:
-        
-            # message: Illegal operation
-            await interaction.response.send_message(f"ERROR: You are not {now_user_id}!", ephemeral=True)
+        # View: Select VM Number
+        await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumberTab(self.ctx, timeout=config.TIME))
     
     
     # UI: Show VM info
@@ -736,36 +750,29 @@ class MainMenu(View):
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
         global now_user_id, now_operate_user_id
         
-        if now_user_id == now_operate_user_id: # User data found
+        # View: Select VM Name
+        view = SelectVMNameTab("info", self.ctx, timeout=config.TIME)
+        
+        if len(self.VMList) == 0: # No VMs found.
             
-            # View: Select VM Name
-            view = SelectVMNameTab("info", self.ctx, timeout=config.TIME)
+            # message: No VMs found
+            await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
             
-            if len(self.VMList) == 0: # No VMs found.
+        else: # VMs found.
+            
+            for vm in self.VMList[:24]: # Show VM info
                 
-                # message: No VMs found
-                await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
-                
-            else: # VMs found.
-                
-                for vm in self.VMList[:24]: # Show VM info
+                # VM Name, VM ID, Status, Region
+                view.SelectedVM.add_option(
                     
-                    # VM Name, VM ID, Status, Region
-                    view.SelectedVM.add_option(
-                        
-                        label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
-                        
-                        value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
-                        
-                    )
-                
-                # message: Show VM information
-                await interaction.response.send_message(f"User: {now_user_id}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
-        
-        else:
-        
-            # message: Illegal operation
-            await interaction.response.send_message(f"ERROR: You are not {now_user_id}!", ephemeral=True)
+                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
+                    
+                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
+                    
+                )
+            
+            # message: Show VM information
+            await interaction.response.send_message(f"User: {now_user_id}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
     
     
     # UI: Delete VM
@@ -774,54 +781,40 @@ class MainMenu(View):
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
         global now_user_id, now_operate_user_id
         
-        if now_user_id == now_operate_user_id: # User data found
-            
-            # View: Select VM Name
-            view = SelectVMNameTab("delete", self.ctx, timeout=config.TIME)
-            
-            if len(self.VMList) == 0: # No VMs found.
-                
-                # message: No VMs found
-                await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
-                
-            else: # VMs found.
-                
-                for vm in self.VMList[:24]: # Delete VM
-                    
-                    # VM Name, VM ID, Status, Region
-                    view.SelectedVM.add_option(
-                        
-                        label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
-                        
-                        value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
-                        
-                    )
-                
-                # message: Delete VM
-                await interaction.response.send_message(f"User: {now_user_id}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
-
-        else:
+        # View: Select VM Name
+        view = SelectVMNameTab("delete", self.ctx, timeout=config.TIME)
         
-            # message: Illegal operation
-            await interaction.response.send_message(f"ERROR: You are not {now_user_id}!", ephemeral=True)
-    
-    
+        if len(self.VMList) == 0: # No VMs found.
+            
+            # message: No VMs found
+            await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
+            
+        else: # VMs found.
+            
+            for vm in self.VMList[:24]: # Delete VM
+                
+                # VM Name, VM ID, Status, Region
+                view.SelectedVM.add_option(
+                    
+                    label=f"{vm[1]:05}: {vm[2]} | {vm[0]}",  # VM Name, User Name, Region
+                    
+                    value=f"{vm[0]} {vm[1]} {vm[2]} {vm[3]}" # Region, VM ID, VM Name, Status
+                    
+                )
+            
+            # message: Delete VM
+            await interaction.response.send_message(f"User: {now_user_id}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
+
+
     # UI: Configure your info
     @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
     
     async def EditConf(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         global now_user_id, now_operate_user_id
         
-        if now_user_id == now_operate_user_id:
-            
-            # message: Configure your info
-            await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(now_user_id), "Configure your info."))
-            
-        else:
-            
-            # message: Illegal operation
-            await interaction.response.send_message(f"ERROR: You are not {now_user_id}!", ephemeral=True)
-
+        # message: Configure your info
+        await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(now_user_id), "Configure your info."))
+        
 #------ Call Menu -------------------------------------------------------#
 # Show menu command                                                      #
 #------------------------------------------------------------------------#
@@ -857,7 +850,7 @@ async def ShowMenu(ctx): # Show Menu command
     await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud")
     
     # View: Main Menu
-    await ctx.send(view=MainMenu(ctx, timeout=config.TIME))
+    await ctx.send(view=StartButton(ctx, timeout=config.TIME))
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
