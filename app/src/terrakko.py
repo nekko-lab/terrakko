@@ -799,7 +799,7 @@ async def ShowMenu(ctx): # Show Menu command
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
-    MainMenu(ctx, timeout=config.TIME).send_initial_message()
+    await MainMenu(ctx, timeout=config.TIME).send_initial_message()
     
     # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
