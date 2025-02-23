@@ -16,9 +16,6 @@
 # discord
 import discord
 
-# discord slash commands
-from discord import app_commands
-
 # discord commands
 from discord.ext import commands
 
@@ -60,20 +57,14 @@ intents.message_content = True
 # Intents: Messages
 intents.messages = True
 
-#Client
-client = discord.Client(intents=intents)
-
-# Application Command Tree
-tree = app_commands.CommandTree(client)
-
 # Bot commands options
 bot = commands.Bot(
     
-    command_prefix="/",                               # Command prefix
+    command_prefix=commands.when_mentioned_or("trk"), # Command prefix
     
     case_insensitive=True,                            # Case insensitive
     
-    intents=discord.Intents.default(),                # Intents
+    intents=intents,                                  # Intents
     
     activity=discord.Game("Nekko Cloud")              # Activity
     
@@ -563,17 +554,17 @@ class SetUserInfoForm(Modal):
         self.ctx = ctx
         
         # ciname: User Name
-        self.ciname = TextInput(label="User Name", style=TextStyle.short, default=userdata[2], required=True)
+        self.ciname = TextInput(label="User Name", style=TextStyle.short, default=userdata[2], required=False)
         
         self.add_item(self.ciname) # Add item
         
         # cipass: Password
-        self.cipass = TextInput(label="Password", style=TextStyle.short, default=userdata[3], required=True)
+        self.cipass = TextInput(label="Password", style=TextStyle.short, default=userdata[3], required=False)
         
         self.add_item(self.cipass) # Add item
         
         # sshkey: SSH Key
-        self.sshkey = TextInput(label="SSH Key", style=TextStyle.short, default=userdata[4], required=True)
+        self.sshkey = TextInput(label="SSH Key", style=TextStyle.short, default=userdata[4], required=False)
         
         self.add_item(self.sshkey) # Add item
     
@@ -778,37 +769,32 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@tree.command(
+@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
 
-    name="trk",                      # Command name
-    
-    description="Show the main menu" # Command description
-
-)
-
-async def ShowMenu(interaction: discord.Interaction): # Show Menu command
-    
-    # Initialize PVE Info
-    await proxmox_ve.InitializePVEInfo()
-    
-    if interaction.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+class CallTerrakkosMenu
+    async def ShowMenu(ctx): # Show Menu command
         
-        # message: Hi $USER
-        await interaction.response.send_message(f"Hi {interaction.user.name}!", ephemeral=True)
+        # Initialize PVE Info
+        await proxmox_ve.InitializePVEInfo()
         
-    else: # User data not found
+        if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+            
+            # message: Hi $USER
+            await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
+            
+        else: # User data not found
+            
+            # message: Create user data
+            await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
+            
+            # message: Nice to meet you!
+            await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
         
-        # message: Create user data
-        await db.insert_data(interaction.user.id, "ncadmin", config.PVE_PASS, "")
+        # message: Create VM, Delete VM, Show info
+        await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
         
-        # message: Nice to meet you!
-        await interaction.response.send_message(f"{interaction.user.name}, Nice to meet you!", ephemeral=True)
-    
-    # message: Create VM, Delete VM, Show info
-    await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
-    
-    # View: Main Menu
-    await interaction.response.send_message(view=MainMenu(interaction, timeout=config.TIME), ephemeral=True)
+        # View: Main Menu
+        await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
@@ -850,27 +836,18 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@tree.command(
-
-    name="delete_db",                   # Command name
-    
-    description="Delete the all users data" # Command description
-
-)
+@bot.command(name="delete.db", description="Delete the all users data", ephemeral=True)
 
 async def delete_db(ctx): # Delete Database command
     
     # message: Delete user data
-    # ctx.send("Delete user data")
-    ctx.send("Not implemented yet")
+    # ctx.send("Delete user data", ephemeral=True)
+    ctx.send("Not available", ephemeral=True)
     
     # View: Delete Database
-    # ctx.send(view=DeleteDB(ctx, timeout=config.TIME))
+    # ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Start Bot -------------------------------------------------------#
-
-# Register the command tree
-tree.sync()
 
 # Run the bot
 bot.run(config.DIS_TOKEN)
