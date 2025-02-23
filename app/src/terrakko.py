@@ -64,7 +64,7 @@ intents.messages = True
 client = discord.Client(intents=intents)
 
 # Application Command Tree
-tree = app_commands.ApplicationCommandTree(client)
+tree = app_commands.CommandTree(client)
 
 # Bot commands options
 bot = commands.Bot(
