@@ -647,7 +647,7 @@ class SelectVMNumberTab(View):
 
 class MainMenu(View):
     
-    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+    def __init__(self, ctx, interaction, timeout=config.TIME): # Initialize the class
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -656,17 +656,7 @@ class MainMenu(View):
         self.ctx = ctx
         
         # VM List
-        self.VMList = proxmox_ve.GetNodeVM(self.ctx.author.id)
-        
-        # interaction: discord.Interaction
-        self.interaction: discord.Interaction
-    
-    
-    # Send initial message
-    async def send_initial_message(self) -> None:
-        
-        # message: Create VM, Delete VM, Show info
-        await self.interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+        self.VMList = proxmox_ve.GetNodeVM(interaction.user.id)
     
     
     # UI: Create VM
@@ -675,7 +665,7 @@ class MainMenu(View):
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
         
         # message: Create VM
-        await interaction.response.send_message(f"User: {self.ctx.author.name}\nCreate VM.", ephemeral=True)
+        await interaction.response.send_message(f"User: {interaction.user.id.name}\nCreate VM.", ephemeral=True)
         
         # View: Select VM Number
         await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumberTab(self.ctx, timeout=config.TIME))
@@ -692,7 +682,7 @@ class MainMenu(View):
         if len(self.VMList) == 0: # No VMs found.
             
             # message: No VMs found
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
+            await interaction.response.send_message(f"User: {interaction.user.id}\nNo VMs found.", ephemeral=True)
             
         else: # VMs found.
             
@@ -708,7 +698,7 @@ class MainMenu(View):
                 )
             
             # message: Show VM information
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
+            await interaction.response.send_message(f"User: {interaction.user.id}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
     
     
     # UI: Delete VM
@@ -722,7 +712,7 @@ class MainMenu(View):
         if len(self.VMList) == 0: # No VMs found.
             
             # message: No VMs found
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
+            await interaction.response.send_message(f"User: {interaction.user.id}\nNo VMs found.", ephemeral=True)
             
         else: # VMs found.
             
@@ -738,7 +728,7 @@ class MainMenu(View):
                 )
             
             # message: Delete VM
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
+            await interaction.response.send_message(f"User: {interaction.user.id}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
     
     
     # UI: Configure your info
@@ -747,7 +737,7 @@ class MainMenu(View):
     async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         
         # message: Configure your info
-        await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(self.ctx.author.id), "Configure your info."))
+        await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(interaction.user.id), "Configure your info."))
 
 #------ Bot Ready -------------------------------------------------------#
 # Bot is ready                                                           #
@@ -777,28 +767,28 @@ async def on_ready(): # Bot is ready
 # Show Menu command on Discord
 @tree.command(name="trk", description="Terrakko is here!")
 
-async def ShowMenu(ctx): # Show Menu command
+async def ShowMenu(ctx, interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
     
-    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+    if interaction.user.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
         # message: Hi $USER
-        await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
+        await interaction.response.send_message(f"Hi {interaction.user.name}!", ephemeral=True)
         
     else: # User data not found
         
         # message: Create user data
-        await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
+        await db.insert_data(interaction.user.id, "ncadmin", config.PVE_PASS, "")
         
         # message: Nice to meet you!
-        await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
+        await interaction.response.send_message(f"{interaction.user.name}, Nice to meet you!", ephemeral=True)
     
-    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
-    await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+    await interaction.response.send_message(view=MainMenu(ctx, interaction, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
@@ -842,14 +832,14 @@ class DeleteDB(View):
 # Delete Database command on Discord
 @tree.command(name="delete_db", description="Delete the all users data")
 
-async def delete_db(ctx): # Delete Database command
+async def delete_db(interaction: discord.Interaction): # Delete Database command
     
     # message: Delete user data
-    # ctx.send("Delete user data", ephemeral=True)
-    ctx.send("Not available", ephemeral=True)
+    # interaction.response.send_message("Delete user data", ephemeral=True)
+    interaction.response.send_message("Not available", ephemeral=True)
     
     # View: Delete Database
-    # ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
+    # interaction.response.send_message(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Start Bot -------------------------------------------------------#
 
