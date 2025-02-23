@@ -60,7 +60,7 @@ intents.messages = True
 # Bot commands options
 bot = commands.Bot(
     
-    command_prefix=commands.when_mentioned_or("trk "), # Command prefix
+    command_prefix=commands.when_mentioned_or("trk"), # Command prefix
     
     case_insensitive=True,                            # Case insensitive
     
@@ -666,8 +666,11 @@ class MainMenu(View):
         self.VMList = proxmox_ve.GetNodeVM(self.ctx.author.id)
     
     
+    # message: Create VM, Delete VM, Show info
+    await ctx.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    
     # UI: Create VM
-    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create", ephemeral=True)
+    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
     
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
         
@@ -679,7 +682,7 @@ class MainMenu(View):
     
     
     # UI: Show VM info
-    @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info", ephemeral=True)
+    @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
     
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
         
@@ -709,7 +712,7 @@ class MainMenu(View):
     
     
     # UI: Delete VM
-    @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete", ephemeral=True)
+    @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
     
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
         
@@ -739,7 +742,7 @@ class MainMenu(View):
     
     
     # UI: Configure your info
-    @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata", ephemeral=True)
+    @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
     
     async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         
@@ -771,29 +774,27 @@ async def on_ready(): # Bot is ready
 # Show Menu command on Discord
 @bot.command(name="!", description="Terrakko is here!", ephemeral=True)
 
-async def ShowMenu(interaction: discord.Interaction): # Show Menu command
+async def ShowMenu(ctx): # Show Menu command
     
     # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
     
-    if interaction.user.id in [row[0] for row in await db.get_column("uuid")]: # User data found
+    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
         # message: Hi $USER
-        await interaction.response.send_message(f"Hi {interaction.user.name}!", ephemeral=True)
+        await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
         
     else: # User data not found
         
         # message: Create user data
-        await db.insert_data(interaction.user.id, "ncadmin", config.PVE_PASS, "")
+        await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
         
         # message: Nice to meet you!
-        await interaction.response.send_message(f"{interaction.user.name}, Nice to meet you!", ephemeral=True)
+        await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
-    # message: Create VM, Delete VM, Show info
-    await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
-    await interaction.response.send_message(view=MainMenu(interaction, timeout=config.TIME), ephemeral=True)
+    await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
