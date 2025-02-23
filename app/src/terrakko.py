@@ -187,11 +187,17 @@ async def on_ready(): # Bot is ready
 @bot.event
 
 async def on_interaction(interaction: discord.Interaction): # Bot interaction
-    global now_operate_user_id
+    global nnow_user_id, ow_operate_user_id
     
     now_operate_user_id = interaction.user.id
     
-    print(f"{now_operate_user_id} is now operating {interaction.data}")
+    if now_user_id == now_operate_user_id:
+        
+        print(f"{now_operate_user_id} is now operating {interaction.data}")
+        
+    else:
+        
+        print(f"{now_operate_user_id} is illegal operation! You are not {now_user_id}!")
 
 #------ Confirm and execute ---------------------------------------------#
 # Confirm and Execute the task (Create, Delete, UserData)                #
