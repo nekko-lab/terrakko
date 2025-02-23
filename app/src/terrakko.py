@@ -63,19 +63,6 @@ client = discord.Client(intents=intents)
 # Command Tree
 tree = app_commands.CommandTree(client)
 
-# Bot commands options
-bot = commands.Bot(
-    
-    command_prefix="!",                  # Command prefix
-    
-    case_insensitive=True,               # Case insensitive
-    
-    intents=intents,                     # Intents
-    
-    activity=discord.Game("Nekko Cloud") # Activity
-    
-)
-
 #------ Task Status -----------------------------------------------------#
 # Wait for task completion                                               #
 #------------------------------------------------------------------------#
