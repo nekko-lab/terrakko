@@ -719,7 +719,7 @@ class StartButton(View):
     async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start
         
         # message: Start
-        await interaction.response.send_message(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+        await interaction.response.send_message(view=MainMenu(self.ctx, timeout=config.TIME), ephemeral=True)
 
 #------------------------------------------------------------------------#
 
