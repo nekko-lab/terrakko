@@ -778,7 +778,14 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@tree.command(name="trk", description="Show the main menu", ephemeral=True)
+@tree.command(
+
+    name="trk",                      # Command name
+    
+    description="Show the main menu" # Command description
+
+)
+
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
@@ -843,15 +850,22 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@bot.command(name="trk_delete_db", description="Delete the all users data", ephemeral=True)
+@tree.command(
+
+    name="delete_db",                   # Command name
+    
+    description="Delete the all users data" # Command description
+
+)
 
 async def delete_db(ctx): # Delete Database command
     
     # message: Delete user data
-    ctx.send("Delete user data")
+    # ctx.send("Delete user data")
+    ctx.send("Not implemented yet")
     
     # View: Delete Database
-    ctx.send(view=DeleteDB(ctx, timeout=config.TIME))
+    # ctx.send(view=DeleteDB(ctx, timeout=config.TIME))
 
 #------ Start Bot -------------------------------------------------------#
 
