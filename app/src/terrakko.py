@@ -769,44 +769,31 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!")
+@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
 
-class CallTerrakkoMenu(commands.Cog):
-    def __init__(self, bot, ctx, timeout=config.TIME): # Initialize the class
-        
-        # timeout = 180 sec
-        super().__init__(timeout=timeout)
-        
-        # ctx: context
-        self.ctx = ctx
-        
-        # bot
-        self.bot = bot
+async def ShowMenu(ctx): # Show Menu command
     
+    # Initialize PVE Info
+    await proxmox_ve.InitializePVEInfo()
     
-    async def ShowMenu(self, ctx): # Function: Show Menu
+    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
-        # Initialize PVE Info
-        await proxmox_ve.InitializePVEInfo()
+        # message: Hi $USER
+        await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
         
-        if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
-            
-            # message: Hi $USER
-            await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
-            
-        else: # User data not found
-            
-            # message: Create user data
-            await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
-            
-            # message: Nice to meet you!
-            await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
+    else: # User data not found
         
-        # message: Create VM, Delete VM, Show info
-        await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+        # message: Create user data
+        await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
         
-        # View: Main Menu
-        await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+        # message: Nice to meet you!
+        await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
+    
+    # message: Create VM, Delete VM, Show info
+    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    
+    # View: Main Menu
+    await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
