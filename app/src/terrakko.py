@@ -769,10 +769,22 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
+@bot.command(name="!", description="Terrakko is here!")
 
-class CallTerrakkosMenu
-    async def ShowMenu(ctx): # Show Menu command
+class CallTerrakkoMenu(commands.Cog):
+    def __init__(self, bot, ctx, timeout=config.TIME): # Initialize the class
+        
+        # timeout = 180 sec
+        super().__init__(timeout=timeout)
+        
+        # ctx: context
+        self.ctx = ctx
+        
+        # bot
+        self.bot = bot
+    
+    
+    async def ShowMenu(self, ctx): # Function: Show Menu
         
         # Initialize PVE Info
         await proxmox_ve.InitializePVEInfo()
