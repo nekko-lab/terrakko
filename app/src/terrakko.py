@@ -667,7 +667,7 @@ class MainMenu(View):
     
     
     # UI: Create VM
-    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
+    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create", ephemeral=True)
     
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
         
@@ -679,7 +679,7 @@ class MainMenu(View):
     
     
     # UI: Show VM info
-    @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
+    @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info", ephemeral=True)
     
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
         
@@ -709,7 +709,7 @@ class MainMenu(View):
     
     
     # UI: Delete VM
-    @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
+    @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete", ephemeral=True)
     
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
         
@@ -739,7 +739,7 @@ class MainMenu(View):
     
     
     # UI: Configure your info
-    @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
+    @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata", ephemeral=True)
     
     async def SetKey(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         
@@ -769,7 +769,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.tree.command(name="hi", description="Terrakko is here!")
+@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
 
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
