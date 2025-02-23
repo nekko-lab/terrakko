@@ -60,6 +60,12 @@ intents.message_content = True
 # Intents: Messages
 intents.messages = True
 
+#Client
+client = discord.Client(intents=intents)
+
+# Application Command Tree
+tree = app_commands.ApplicationCommandTree(client)
+
 # Bot commands options
 bot = commands.Bot(
     
@@ -772,7 +778,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.tree.command(name="trk", description="Show the main menu", ephemeral=True)
+@tree.command(name="trk", description="Show the main menu", ephemeral=True)
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
@@ -848,6 +854,9 @@ async def delete_db(ctx): # Delete Database command
     ctx.send(view=DeleteDB(ctx, timeout=config.TIME))
 
 #------ Start Bot -------------------------------------------------------#
+
+# Register the command tree
+tree.sync()
 
 # Run the bot
 bot.run(config.DIS_TOKEN)
