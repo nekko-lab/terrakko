@@ -670,10 +670,10 @@ class MainMenu(View):
     
     
     # Send initial message
-    async def send_initial_message(self) -> None:
+    async def send_initial_message(self, interaction: discord.Interaction) -> None:
         
         # message: Create VM, Delete VM, Show info
-        await self.interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+        await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     
     # UI: Create VM
@@ -799,7 +799,7 @@ async def ShowMenu(ctx): # Show Menu command
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
-    await MainMenu(ctx, timeout=config.TIME).send_initial_message()
+    await MainMenu(ctx, timeout=config.TIME).send_initial_message(ctx)
     
     # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
