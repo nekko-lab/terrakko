@@ -63,11 +63,11 @@ intents.messages = True
 # Bot commands options
 bot = commands.Bot(
     
-    command_prefix=commands.when_mentioned_or("trk"), # Command prefix
+    command_prefix="/",                               # Command prefix
     
     case_insensitive=True,                            # Case insensitive
     
-    intents=intents,                                  # Intents
+    intents=discord.Intents.default(),                # Intents
     
     activity=discord.Game("Nekko Cloud")              # Activity
     
@@ -772,7 +772,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.tree.command(name="hi")
+@bot.tree.command(name="trk", description="Show the main menu", ephemeral=True)
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
@@ -837,15 +837,15 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@bot.command(name="delete_db", description="Delete user data", ephemeral=True)
+@bot.command(name="trk_delete_db", description="Delete the all users data", ephemeral=True)
 
 async def delete_db(ctx): # Delete Database command
     
     # message: Delete user data
-    ctx.send("Delete user data", ephemeral=True)
+    ctx.send("Delete user data")
     
     # View: Delete Database
-    ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
+    ctx.send(view=DeleteDB(ctx, timeout=config.TIME))
 
 #------ Start Bot -------------------------------------------------------#
 
