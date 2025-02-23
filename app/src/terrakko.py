@@ -769,7 +769,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.tree.command(name="!", description="Terrakko is here!", ephemeral=True)
+@bot.tree.command(name="!", description="Terrakko is here!")
 
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
