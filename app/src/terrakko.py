@@ -66,11 +66,13 @@ tree = app_commands.CommandTree(client)
 # Bot commands options
 bot = commands.Bot(
     
-    case_insensitive=True,                            # Case insensitive
+    command_prefix="!",                  # Command prefix
     
-    intents=intents,                                  # Intents
+    case_insensitive=True,               # Case insensitive
     
-    activity=discord.Game("Nekko Cloud")              # Activity
+    intents=intents,                     # Intents
+    
+    activity=discord.Game("Nekko Cloud") # Activity
     
 )
 
