@@ -779,7 +779,7 @@ async def ShowMenu(ctx): # Show Menu command
     if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
         
         # message: Hi $USER
-        await ctx.send(f"Hi {ctx.author.name}!", ephemeral=True)
+        await ctx.response.send(f"Hi {ctx.author.name}!", ephemeral=True)
         
     else: # User data not found
         
@@ -787,13 +787,13 @@ async def ShowMenu(ctx): # Show Menu command
         await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
         
         # message: Nice to meet you!
-        await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
+        await ctx.response.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
     # message: Create VM, Delete VM, Show info
-    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+    await ctx.response.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
-    await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
+    await ctx.response.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
