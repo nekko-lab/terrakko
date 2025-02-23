@@ -654,7 +654,7 @@ class SelectVMNumberTab(View):
 
 class MainMenu(View):
     
-    def __init__(self, ctx, timeout=config.TIME) # Initialize the class
+    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
