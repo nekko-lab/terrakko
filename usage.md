@@ -30,9 +30,9 @@ Terrakkoに予めユーザ名・パスワード・SSHキーを登録すること
 
 ### メニューを呼び出す
 
-- メニューを呼び出すコマンドは `@terrakko !` または `trk!`
-  - `@terrakko !`: メンション + 空白 + !
-  - `trk!`: trk + !  
+- メニューを呼び出すコマンドは `@terrakko hi` または `trk hi`
+  - `@terrakko !`: メンション + 空白 + hi
+  - `trk hi`: trk + hi  
 
     ![image1.png](/images/image1.png)
 

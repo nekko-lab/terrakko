@@ -16,6 +16,9 @@
 # discord
 import discord
 
+# discord slash commands
+from discord import app_commands
+
 # discord commands
 from discord.ext import commands
 
