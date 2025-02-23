@@ -71,10 +71,10 @@ bot = commands.Bot(
 )
 
 # Now user id
-now_user_id: str
+now_user_id: int
 
 # Now operate user id
-now_operate_user_id: str
+now_operate_user_id: int
 
 #------ Task Status -----------------------------------------------------#
 # Wait for task completion                                               #
