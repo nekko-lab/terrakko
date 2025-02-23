@@ -60,7 +60,7 @@ intents.messages = True
 # Bot commands options
 bot = commands.Bot(
     
-    command_prefix=commands.when_mentioned_or("trk"), # Command prefix
+    command_prefix=commands.when_mentioned_or("trk "), # Command prefix
     
     case_insensitive=True,                            # Case insensitive
     
@@ -769,7 +769,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
+@bot.tree.command(name="!", description="Terrakko is here!", ephemeral=True)
 
 async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
