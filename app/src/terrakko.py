@@ -187,7 +187,7 @@ async def on_ready(): # Bot is ready
 @bot.event
 
 async def on_interaction(interaction: discord.Interaction): # Bot interaction
-    global nnow_user_id, ow_operate_user_id
+    global now_user_id, now_operate_user_id
     
     now_operate_user_id = interaction.user.id
     
@@ -717,9 +717,19 @@ class StartButton(View):
     @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="goto_mainmenu")
     
     async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start
+        global now_user_id, now_operate_user_id
         
-        # message: Start
-        await interaction.response.send_message(view=MainMenu(self.ctx, timeout=config.TIME), ephemeral=True)
+        now_operate_user_id = interaction.user.id
+        
+        if now_user_id == now_operate_user_id: # Check the user id
+            
+            # message: Start
+            await interaction.response.send_message(view=MainMenu(self.ctx, timeout=config.TIME), ephemeral=True)
+            
+        else: # Illegal operation
+            
+            # message: Illegal operation
+            await interaction.response.send_message("Illegal operation", ephemeral=True)
 
 #------------------------------------------------------------------------#
 
@@ -741,7 +751,6 @@ class MainMenu(View):
     @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
     
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
-        global now_user_id, now_operate_user_id
         
         # message: Create VM
         await interaction.response.send_message(f"User: {now_user_id}\nCreate VM.", ephemeral=True)
@@ -754,7 +763,6 @@ class MainMenu(View):
     @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
     
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
-        global now_user_id, now_operate_user_id
         
         # View: Select VM Name
         view = SelectVMNameTab("info", self.ctx, timeout=config.TIME)
@@ -785,7 +793,6 @@ class MainMenu(View):
     @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
     
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
-        global now_user_id, now_operate_user_id
         
         # View: Select VM Name
         view = SelectVMNameTab("delete", self.ctx, timeout=config.TIME)
@@ -816,7 +823,6 @@ class MainMenu(View):
     @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
     
     async def EditConf(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
-        global now_user_id, now_operate_user_id
         
         # message: Configure your info
         await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(now_user_id), "Configure your info."))
