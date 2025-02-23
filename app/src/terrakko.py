@@ -20,7 +20,7 @@ import discord
 from discord.ext import commands
 
 # discord Interaction, TextStyle
-from discord import Interaction, TextStyle
+from discord import Interaction, TextStyle, app_commands
 
 # discord UI
 from discord.ui import TextInput, Modal, Select, Button, View
@@ -57,10 +57,14 @@ intents.message_content = True
 # Intents: Messages
 intents.messages = True
 
+# Client
+client = discord.Client(intents=intents)
+
+# Command Tree
+tree = app_commands.CommandTree(client)
+
 # Bot commands options
 bot = commands.Bot(
-    
-    command_prefix=commands.when_mentioned_or("trk"), # Command prefix
     
     case_insensitive=True,                            # Case insensitive
     
@@ -670,10 +674,10 @@ class MainMenu(View):
     
     
     # Send initial message
-    async def send_initial_message(self, interaction: discord.Interaction) -> None:
+    async def send_initial_message(self) -> None:
         
         # message: Create VM, Delete VM, Show info
-        await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
+        await self.interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     
     # UI: Create VM
@@ -761,11 +765,14 @@ class MainMenu(View):
 #------------------------------------------------------------------------#
 
 # Bot event: on_ready
-@bot.event
+@client.event
 
 async def on_ready(): # Bot is ready
     
     await asyncio.sleep(1)
+    
+    # slash command register
+    await tree.sync()
     
     # Print the logo and version
     print(config.LOGO)
@@ -779,7 +786,7 @@ async def on_ready(): # Bot is ready
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!", ephemeral=True)
+@tree.command(name="trk", description="Terrakko is here!")
 
 async def ShowMenu(ctx): # Show Menu command
     
@@ -799,7 +806,7 @@ async def ShowMenu(ctx): # Show Menu command
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!", ephemeral=True)
     
-    await MainMenu(ctx, timeout=config.TIME).send_initial_message(discord.Interaction)
+    await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
     await ctx.send(view=MainMenu(ctx, timeout=config.TIME), ephemeral=True)
@@ -844,7 +851,7 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@bot.command(name="delete.db", description="Delete the all users data", ephemeral=True)
+@tree.command(name="delete_db", description="Delete the all users data", ephemeral=True)
 
 async def delete_db(ctx): # Delete Database command
     
@@ -858,6 +865,6 @@ async def delete_db(ctx): # Delete Database command
 #------ Start Bot -------------------------------------------------------#
 
 # Run the bot
-bot.run(config.DIS_TOKEN)
+client.run(config.DIS_TOKEN)
 
 #------------------------------------------------------------------------#
