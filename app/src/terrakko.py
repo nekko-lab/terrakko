@@ -853,7 +853,7 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@tree.command(name="delete_db", description="Delete the all users data", ephemeral=True)
+@tree.command(name="delete_db", description="Delete the all users data")
 
 async def delete_db(ctx): # Delete Database command
     
