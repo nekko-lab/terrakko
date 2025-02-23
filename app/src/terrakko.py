@@ -73,6 +73,9 @@ bot = commands.Bot(
 # Now user id
 now_user_id: str
 
+# Now operate user id
+now_operate_user_id: str
+
 #------ Task Status -----------------------------------------------------#
 # Wait for task completion                                               #
 #------------------------------------------------------------------------#
@@ -673,12 +676,12 @@ class MainMenu(View):
     @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
     
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
-        global now_user_id
+        global now_user_id, now_operate_user_id
         
-        if now_user_id == self.ctx.author.id: # User data found    
+        if now_user_id == now_operate_user_id: # User data found    
             
             # message: Create VM
-            await interaction.response.send_message(f"User: {self.ctx.author.name}\nCreate VM.", ephemeral=True)
+            await interaction.response.send_message(f"User: {now_user_id}\nCreate VM.", ephemeral=True)
             
             # View: Select VM Number
             await interaction.edit_original_response(content="How many VMs do you want to create?", view=SelectVMNumberTab(self.ctx, timeout=config.TIME))
@@ -693,9 +696,9 @@ class MainMenu(View):
     @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
     
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
-        global now_user_id
+        global now_user_id, now_operate_user_id
         
-        if now_user_id == self.ctx.author.id: # User data found
+        if now_user_id == now_operate_user_id: # User data found
             
             # View: Select VM Name
             view = SelectVMNameTab("info", self.ctx, timeout=config.TIME)
@@ -703,7 +706,7 @@ class MainMenu(View):
             if len(self.VMList) == 0: # No VMs found.
                 
                 # message: No VMs found
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
+                await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
                 
             else: # VMs found.
                 
@@ -719,7 +722,7 @@ class MainMenu(View):
                     )
                 
                 # message: Show VM information
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
+                await interaction.response.send_message(f"User: {now_user_id}\nShow VM info and operate VM startup.\n\nWhich VM do you want to show information?", view=view, ephemeral=True)
         
         else:
         
@@ -731,9 +734,9 @@ class MainMenu(View):
     @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
     
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
-        global now_user_id
+        global now_user_id, now_operate_user_id
         
-        if now_user_id == self.ctx.author.id: # User data found
+        if now_user_id == now_operate_user_id: # User data found
             
             # View: Select VM Name
             view = SelectVMNameTab("delete", self.ctx, timeout=config.TIME)
@@ -741,7 +744,7 @@ class MainMenu(View):
             if len(self.VMList) == 0: # No VMs found.
                 
                 # message: No VMs found
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nNo VMs found.", ephemeral=True)
+                await interaction.response.send_message(f"User: {now_user_id}\nNo VMs found.", ephemeral=True)
                 
             else: # VMs found.
                 
@@ -757,7 +760,7 @@ class MainMenu(View):
                     )
                 
                 # message: Delete VM
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
+                await interaction.response.send_message(f"User: {now_user_id}\nDelete VM.\n\nWhich VM do you want to delete?", view=view, ephemeral=True)
 
         else:
         
@@ -769,12 +772,12 @@ class MainMenu(View):
     @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
     
     async def EditConf(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
-        global now_user_id
+        global now_user_id, now_operate_user_id
         
-        if now_user_id == self.ctx.author.id:
+        if now_user_id == now_operate_user_id:
             
             # message: Configure your info
-            await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(self.ctx.author.id), "Configure your info."))
+            await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(now_user_id), "Configure your info."))
             
         else:
             
@@ -803,6 +806,18 @@ async def on_ready(): # Bot is ready
     # Initialize Discord user variables
     now_user_id = ""
 
+#------ Bot Interaction -------------------------------------------------#
+# Bot interaction                                                        #
+#------------------------------------------------------------------------#
+
+# Bot event: on interaction
+@bot.event
+
+async def on_interaction(interaction: discord.Interaction): # Bot interaction
+    global now_operate_user_id
+    
+    now_operate_user_id = await interaction.user.id
+
 #------ Call Menu -------------------------------------------------------#
 # Show menu command                                                      #
 #------------------------------------------------------------------------#
@@ -829,7 +844,10 @@ async def ShowMenu(ctx): # Show Menu command
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!")
     
+    # Update now user id
     now_user_id = ctx.author.id
+    
+    print(f"now user is: {now_user_id}")
     
     # message: Create VM, Delete VM, Show info
     await ctx.send(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud")
