@@ -667,16 +667,6 @@ class MainMenu(View):
     
     
     # message: Create VM, Delete VM, Show info
-    @discord.ui.select(
-        placeholder="Select an option",
-        options=[
-            discord.SelectOption(label="Create VM", value="create"),
-            discord.SelectOption(label="Delete VM", value="delete"),
-            discord.SelectOption(label="Show VM Info", value="info"),
-            discord.SelectOption(label="Configure your info", value="userdata")
-        ]
-    )
-    
     async def send_initial_message(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
