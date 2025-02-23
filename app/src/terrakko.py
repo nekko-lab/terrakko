@@ -792,7 +792,7 @@ class MainMenu(View):
 @bot.event
 
 async def on_ready(): # Bot is ready
-    global now_user_id
+    global now_user_id, now_operate_user_id
     
     await asyncio.sleep(1)
     
@@ -805,6 +805,8 @@ async def on_ready(): # Bot is ready
     
     # Initialize Discord user variables
     now_user_id = ""
+    
+    now_operate_user_id = ""
 
 #------ Bot Interaction -------------------------------------------------#
 # Bot interaction                                                        #
@@ -816,7 +818,9 @@ async def on_ready(): # Bot is ready
 async def on_interaction(interaction: discord.Interaction): # Bot interaction
     global now_operate_user_id
     
-    now_operate_user_id = await interaction.user.id
+    now_operate_user_id = interaction.user.id
+    
+    print(f"{now_operate_user_id} is now operating {interaction.data}")
 
 #------ Call Menu -------------------------------------------------------#
 # Show menu command                                                      #
