@@ -647,13 +647,13 @@ class SelectVMNumberTab(View):
 
 class MainMenu(View):
     
-    def __init__(self, ctx, interaction, timeout=config.TIME): # Initialize the class
+    def __init__(self, interaction, timeout=config.TIME): # Initialize the class
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
         
         # ctx: context
-        self.ctx = ctx
+        self.ctx = interaction
         
         # VM List
         self.VMList = proxmox_ve.GetNodeVM(interaction.user.id)
@@ -767,7 +767,7 @@ async def on_ready(): # Bot is ready
 # Show Menu command on Discord
 @tree.command(name="trk", description="Terrakko is here!")
 
-async def ShowMenu(ctx, interaction: discord.Interaction): # Show Menu command
+async def ShowMenu(interaction: discord.Interaction): # Show Menu command
     
     # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
@@ -788,7 +788,7 @@ async def ShowMenu(ctx, interaction: discord.Interaction): # Show Menu command
     await interaction.response.send_message(f"Create VM:\tCreate a new VM\nDelete VM:\tDelete the VM\nShow VM Info:\tShow the VM information and operate VM startup\nConfigure your info: \tSet up your profile\n\nTerrakko v{config.version}\nPowered by Nekko Cloud", ephemeral=True)
     
     # View: Main Menu
-    await interaction.response.send_message(view=MainMenu(ctx, interaction, timeout=config.TIME), ephemeral=True)
+    await interaction.response.send_message(view=MainMenu(interaction, timeout=config.TIME), ephemeral=True)
 
 #------ Delete Database -------------------------------------------------#
 # Delete Database                                                        #
