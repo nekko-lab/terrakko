@@ -867,7 +867,7 @@ class StartButton(View):
     
     )
     
-    async def StartTerrakko(self, interaction: discord.Interaction) -> None: # Function: Start
+    async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start Terrakko
         
         if self.userses.set_current_user() == interaction.user.id: # Check the user id
             
