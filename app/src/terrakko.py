@@ -719,6 +719,7 @@ class StartButton(View):
     async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start
         global now_user_id, now_operate_user_id
         
+        # Update the user id
         now_operate_user_id = interaction.user.id
         
         if now_user_id == now_operate_user_id: # Check the user id
@@ -729,7 +730,7 @@ class StartButton(View):
         else: # Illegal operation
             
             # message: Illegal operation
-            await interaction.response.send_message("Illegal operation", ephemeral=True)
+            await interaction.response.send_message("Illegal operation!", ephemeral=True)
 
 #------------------------------------------------------------------------#
 
