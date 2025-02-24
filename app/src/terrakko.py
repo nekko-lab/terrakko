@@ -77,10 +77,7 @@ bot = commands.Bot(
 class UserSession():
     
     # Initialize the class
-    def __init__(self, ctx, timeout=config.TIME):
-        
-        # timeout = 180 sec
-        super().__init__(timeout=timeout)
+    def __init__(self, ctx):
         
         # Context
         self.ctx = ctx
@@ -233,9 +230,6 @@ class ConfirmAndExecute(View):
         
         # vmid
         self.vmid   = vmid
-        
-        # Update the VM status
-        self.userses = UserSession(ctx, timeout=config.TIME)
     
     
     # UI: Yes button
@@ -250,53 +244,46 @@ class ConfirmAndExecute(View):
     )
     
     async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
-        
-        if self.userses.set_current_user() == interaction.user.id: # Check the user id
             
-            if self.mode == "create": # mode: create
-                
-                # message: Creating VM
-                await interaction.response.send_message("Inform you here when the VM is completed.\nCreating VM...", ephemeral=True)
-                
-                for i in range(len(self.vmname)): # Create VM
-                    
-                    # Create VM instance (VMID, VM Name, User Name, Password, SSH Key)
-                    await proxmox_ve.CreateInstance(proxmox_ve.GetVMID(), f"{interaction.user.id}-{self.vmname[i].value}", self.ciname, self.cipass, self.sshkey)
-                    
-                    await asyncio.sleep(1)
-                
-                
-                # Wait for task completion: task == create
-                await WaitForTaskCompletion(interaction, self.vmid, "create")
-                
-            elif self.mode == "delete": # mode: delete
-                
-                # message: Deleting VM
-                await interaction.response.send_message("Inform you here when the VM is completed.\nDeleting VM...", ephemeral=True)
-                
-                # Delete VM instance
-                await proxmox_ve.DeleteInstance(self.region, self.vmid)
-                
-                # Wait for task completion: task == delete
-                await WaitForTaskCompletion(interaction, self.vmid, "delete")
-                
-            elif self.mode == "userdata": # mode: userdata
-                
-                # message: Saving user data
-                await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
-                
-                # message: User data saved
-                await interaction.response.send_message("Tasks completed", ephemeral=True)
-                
-            else: # mode: unknown
-                
-                # message: Error
-                await interaction.response.send_message("Error", ephemeral=True)
-                
-        else: # Illegal operation
+        if self.mode == "create": # mode: create
             
-            # message: Illegal operation
-            await interaction.response.send_message("Illegal operation!", ephemeral=True)
+            # message: Creating VM
+            await interaction.response.send_message("Inform you here when the VM is completed.\nCreating VM...", ephemeral=True)
+            
+            for i in range(len(self.vmname)): # Create VM
+                
+                # Create VM instance (VMID, VM Name, User Name, Password, SSH Key)
+                await proxmox_ve.CreateInstance(proxmox_ve.GetVMID(), f"{interaction.user.id}-{self.vmname[i].value}", self.ciname, self.cipass, self.sshkey)
+                
+                await asyncio.sleep(1)
+            
+            
+            # Wait for task completion: task == create
+            await WaitForTaskCompletion(interaction, self.vmid, "create")
+            
+        elif self.mode == "delete": # mode: delete
+            
+            # message: Deleting VM
+            await interaction.response.send_message("Inform you here when the VM is completed.\nDeleting VM...", ephemeral=True)
+            
+            # Delete VM instance
+            await proxmox_ve.DeleteInstance(self.region, self.vmid)
+            
+            # Wait for task completion: task == delete
+            await WaitForTaskCompletion(interaction, self.vmid, "delete")
+            
+        elif self.mode == "userdata": # mode: userdata
+            
+            # message: Saving user data
+            await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
+            
+            # message: User data saved
+            await interaction.response.send_message("Tasks completed", ephemeral=True)
+            
+        else: # mode: unknown
+            
+            # message: Error
+            await interaction.response.send_message("Error", ephemeral=True)
     
     
     # UI: No button
@@ -312,15 +299,8 @@ class ConfirmAndExecute(View):
     
     async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
         
-        if self.userses.set_current_user() == interaction.user.id:
-            
-            # message: Canceled
-            await interaction.response.send_message("Canceled", ephemeral=True)
-        
-        else:
-            
-            # message: Illegal operation
-            await interaction.response.send_message("Illegal operation!", ephemeral=True)
+        # message: Canceled
+        await interaction.response.send_message("Canceled", ephemeral=True)
 
 #------ Operate VM power ------------------------------------------------#
 # Operate the VM instance's power: Start, Shutdown, Reboot, Stop         #
@@ -347,7 +327,7 @@ class OperateVMPower(View):
         self.status = {}
         
         # Update the VM status
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # Update the VM status
@@ -523,7 +503,7 @@ class OperateVMPower(View):
 class SelectVMNameTab(View):
     
     # Initialize the class
-    def __init__(self, mode, ctx, timeout=config.TIME):
+    def __init__(self, ctx, mode, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -535,7 +515,7 @@ class SelectVMNameTab(View):
         self.mode = mode
         
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # UI: Select VM
@@ -655,6 +635,7 @@ class ProfileConfigurationForm(Modal):
             
             return 0
         
+        
         # Get user data
         userlist = await db.get_userdata(interaction.user.id)
         
@@ -665,6 +646,7 @@ class ProfileConfigurationForm(Modal):
             
             return 0
         
+        
         # init msg val
         msg = ""
         
@@ -672,6 +654,7 @@ class ProfileConfigurationForm(Modal):
             
             # message: VM Name, User Name, Password, SSH Key
             msg += f"VM Name:\t{interaction.user.id}-{vmname}\nUser Name:\t{userlist[2]}\nPassword:\t||{userlist[3]}||\nSSH Key:\t||{userlist[4]}||\n"
+        
         
         msg += "\nDo you want to create this?"
             
@@ -746,7 +729,7 @@ class SetUserInfoForm(Modal):
         self.add_item(self.sshkey) # Add item
         
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     async def on_submit(self, interaction: Interaction) -> None: # Modal: Submit button
@@ -828,7 +811,7 @@ class SelectVMNumberTab(View):
         self.ctx = ctx
         
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # UI: Select VM
@@ -870,7 +853,7 @@ class StartButton(View):
         self.ctx = ctx
         
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # UI: Start button
@@ -913,7 +896,7 @@ class MainMenu(View):
         self.VMList = proxmox_ve.GetNodeVM(self.ctx.author.id)
         
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # UI: Create VM
@@ -1046,9 +1029,16 @@ class MainMenu(View):
     
     async def EditConf(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         
-        # message: Configure your info
-        await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(interaction.user.id), "Configure your info."))
+        if self.userses.set_current_user() == interaction.user.id:
+            
+            # message: Configure your info
+            await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(interaction.user.id), "Configure your info."))
         
+        else:
+            
+            # message: Illegal operation
+            await interaction.response.send_message("Illegal operation!", ephemeral=True)
+
 #------ Call Menu -------------------------------------------------------#
 # Show menu command                                                      #
 #------------------------------------------------------------------------#
@@ -1079,6 +1069,7 @@ async def ShowMenu(ctx): # Show Menu command
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!")
     
+    
     print(f"now user is: {ctx.author.id}")
     
     # message: Create VM, Delete VM, Show info
@@ -1103,7 +1094,7 @@ class DeleteDB(View):
         self.ctx = ctx
 
         # Update the user id
-        self.userses = UserSession(ctx, timeout=config.TIME)
+        self.userses = UserSession(ctx)
     
     
     # UI: Yes button
@@ -1146,8 +1137,15 @@ class DeleteDB(View):
     
     async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
         
-        # message: Canceled
-        interaction.response.send_message("Canceled", ephemeral=True)
+        if self.userses.set_current_user() == interaction.user.id: # Check the user id
+            
+            # message: Canceled
+            interaction.response.send_message("Canceled", ephemeral=True)
+            
+        else: # Illegal operation
+            
+            # message: Illegal operation
+            interaction.response.send_message("Illegal operation!", ephemeral=True)
 
 #------ Call database menu ----------------------------------------------#
 # Delete Database command                                                #
@@ -1165,12 +1163,12 @@ class DeleteDB(View):
 # Delete Database command
 async def delete_db(ctx):
     
-    # message: Delete user data
-    # ctx.send("Delete user data", ephemeral=True)
-    ctx.send("Not available", ephemeral=True)
-    
-    # View: Delete Database
-    # ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
+        # message: Delete user data
+        # ctx.send("Delete user data", ephemeral=True)
+        ctx.send("Not available", ephemeral=True)
+        
+        # View: Delete Database
+        # ctx.send(view=DeleteDB(ctx, timeout=config.TIME), ephemeral=True)
 
 #------ Start Bot -------------------------------------------------------#
 
