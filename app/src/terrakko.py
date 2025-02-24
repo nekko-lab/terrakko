@@ -140,7 +140,7 @@ async def WaitForTaskCompletion(interaction, vmid, task):
         
     else: # task: unknown
         
-        await interaction.followup.send("Error", ephemeral=True)
+        await interaction.followup.send("ERROR", ephemeral=True)
         
         return 1
     
@@ -283,7 +283,7 @@ class ConfirmAndExecute(View):
         else: # mode: unknown
             
             # message: Error
-            await interaction.response.send_message("Error", ephemeral=True)
+            await interaction.response.send_message("ERROR: ConfirmAndExecute", ephemeral=True)
     
     
     # UI: No button
@@ -503,7 +503,7 @@ class OperateVMPower(View):
 class SelectVMNameTab(View):
     
     # Initialize the class
-    def __init__(self, ctx, mode, timeout=config.TIME):
+    def __init__(self, mode, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -565,7 +565,7 @@ class SelectVMNameTab(View):
                         
                 except Exception as e: # Delete Error
                     
-                    print(f"Delete Error: {e}")
+                    print(f"ERROR: {e}")
                 
             elif self.mode == "info": # mode: info
                 
@@ -586,12 +586,12 @@ class SelectVMNameTab(View):
                 
                 except Exception as e: # Show Info Error
                     
-                    print(f"Info Error: {e}")
+                    print(f"ERROR: {e}")
                 
             else: # mode: unknown
                 
                 # message: Error
-                await interaction.response.send_message(f"{val[1]}\nError", ephemeral=True)
+                await interaction.response.send_message(f"ERROR: {val[1]}", ephemeral=True)
                 
         else: # Not the VM owner
             
@@ -688,9 +688,9 @@ class ProfileConfigurationForm(Modal):
     async def on_error(self, interaction: Interaction, error: Exception) -> None: # Modal: Error
         
         # message: Error
-        print("error: ProfileConfigurationForm")
+        print("ERROR: ProfileConfigurationForm")
         
-        await interaction.response.send_message("Error: ProfileConfigurationForm", ephemeral=True)
+        await interaction.response.send_message("ERROR: ProfileConfigurationForm", ephemeral=True)
 
     
     async def on_timeout(self) -> None: # Modal: Timeout
@@ -785,9 +785,9 @@ class SetUserInfoForm(Modal):
     async def on_error(self, interaction: Interaction, error: Exception) -> None: # Modal: Error
         
         # message: Error
-        print("error: SetUserInfoForm")
+        print("ERROR: SetUserInfoForm")
         
-        await interaction.response.send_message("Error: SetUserInfoForm", ephemeral=True)
+        await interaction.response.send_message("ERROR: SetUserInfoForm", ephemeral=True)
     
     
     async def on_timeout(self) -> None: # Modal: Timeout
