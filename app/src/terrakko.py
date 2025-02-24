@@ -189,9 +189,10 @@ async def on_ready(): # Bot is ready
 async def on_interaction(interaction: discord.Interaction): # Bot interaction
     global now_user_id, now_operate_user_id
     
+    # Update the user id
     now_operate_user_id = interaction.user.id
     
-    if now_user_id == now_operate_user_id:
+    if now_user_id == now_operate_user_id: # Check the user id
         
         print(f"{now_operate_user_id} is now operating {interaction.data}")
         
@@ -205,7 +206,8 @@ async def on_interaction(interaction: discord.Interaction): # Bot interaction
 
 class ConfirmAndExecute(View):
     
-    def __init__(self, mode, vmname, ciname, cipass, sshkey, r, vmid, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, mode, vmname, ciname, cipass, sshkey, r, vmid, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -232,7 +234,16 @@ class ConfirmAndExecute(View):
         self.vmid   = vmid
     
     
-    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes") # UI: Yes button
+    # UI: Yes button
+    @discord.ui.button(
+        
+        label="Yes",                     # UI: Yes
+        
+        style=discord.ButtonStyle.green, # UI: Green
+        
+        custom_id="yes"                  # UI: Yes
+        
+    )
     
     async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
         
@@ -277,7 +288,16 @@ class ConfirmAndExecute(View):
             await interaction.response.send_message("Error", ephemeral=True)
     
     
-    @discord.ui.button(label="No", style=discord.ButtonStyle.red, custom_id="no") # UI: No button
+    # UI: No button
+    @discord.ui.button(
+        
+        label="No",                    # UI: No
+        
+        style=discord.ButtonStyle.red, # UI: Red
+        
+        custom_id="no"                 # UI: No
+        
+    )
     
     async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
         
@@ -290,7 +310,8 @@ class ConfirmAndExecute(View):
 
 class OperateVMPower(View):
     
-    def __init__(self, r, vmid, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, r, vmid, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -308,14 +329,23 @@ class OperateVMPower(View):
         self.status = {}
     
     
-    async def UpdateVMStatus(self): # Update the VM status
+    # Update the VM status
+    async def UpdateVMStatus(self):
         
         # Get VM status
         self.status = await proxmox_ve.GetVMStatus(self.region, self.vmid)
     
     
     # UI: Start button
-    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="start")
+    @discord.ui.button(
+        
+        label="Start",                   # UI: Start
+        
+        style=discord.ButtonStyle.green, # UI: Green
+        
+        custom_id="start"                # UI: Start
+        
+    )
     
     async def StartVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start VM
         
@@ -339,7 +369,16 @@ class OperateVMPower(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already running.", ephemeral=True)
     
     
-    @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.gray, custom_id="shutdown") # UI: Shutdown button
+    # UI: Shutdown button
+    @discord.ui.button(
+        
+        label="Shutdown",               # UI: Shutdown
+        
+        style=discord.ButtonStyle.gray, # UI: Gray
+        
+        custom_id="shutdown"            # UI: Shutdown
+        
+    )
     
     async def ShutdownVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Shutdown VM
         
@@ -363,7 +402,16 @@ class OperateVMPower(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
     
-    @discord.ui.button(label="Reboot", style=discord.ButtonStyle.blurple, custom_id="reboot") # UI: Reboot button
+    # UI: Reboot button
+    @discord.ui.button(
+        
+        label="Reboot",                    # UI: Reboot
+        
+        style=discord.ButtonStyle.blurple, # UI: Blurple
+        
+        custom_id="reboot"                 # UI: Reboot
+        
+    )
     
     async def RebootVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Reboot VM
         
@@ -387,7 +435,16 @@ class OperateVMPower(View):
             await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
     
     
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="stop") # UI: Stop button
+    # UI: Stop button
+    @discord.ui.button(
+        
+        label="Stop",                  # UI: Stop
+        
+        style=discord.ButtonStyle.red, # UI: Red
+        
+        custom_id="stop"               # UI: Stop
+        
+    )
     
     async def StopVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Stop VM
         
@@ -416,7 +473,8 @@ class OperateVMPower(View):
 
 class SelectVMNameTab(View):
     
-    def __init__(self, mode, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, mode, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -500,7 +558,8 @@ class SelectVMNameTab(View):
 
 class ProfileConfigurationForm(Modal):
     
-    def __init__(self, vmnum, title: str) -> None: # Initialize the class
+    # Initialize the class
+    def __init__(self, vmnum, title: str) -> None:
         
         # title: Configure Cloud-init settings
         super().__init__(title=title)
@@ -595,7 +654,8 @@ class ProfileConfigurationForm(Modal):
 
 class SetUserInfoForm(Modal):
     
-    def __init__(self, ctx, userdata, title: str) -> None: # Initialize the class
+    # Initialize the class
+    def __init__(self, ctx, userdata, title: str) -> None:
         
         # title: Configure your info
         super().__init__(title=title)
@@ -673,7 +733,8 @@ class SetUserInfoForm(Modal):
 
 class SelectVMNumberTab(View):
     
-    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -704,7 +765,8 @@ class SelectVMNumberTab(View):
 
 class StartButton(View):
     
-    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -714,7 +776,15 @@ class StartButton(View):
     
     
     # UI: Start button
-    @discord.ui.button(label="Start", style=discord.ButtonStyle.green, custom_id="goto_mainmenu")
+    @discord.ui.button(
+        
+        label="Start",                   # UI: Start
+        
+        style=discord.ButtonStyle.green, # UI: Green
+        
+        custom_id="goto_mainmenu"        # UI: Goto Main Menu
+    
+    )
     
     async def StartTerrakko(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Start
         global now_user_id, now_operate_user_id
@@ -736,7 +806,8 @@ class StartButton(View):
 
 class MainMenu(View):
     
-    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -749,7 +820,15 @@ class MainMenu(View):
     
     
     # UI: Create VM
-    @discord.ui.button(label="Create VM", style=discord.ButtonStyle.green, custom_id="create")
+    @discord.ui.button(
+        
+        label="Create VM",               # UI: Create VM
+        
+        style=discord.ButtonStyle.green, # UI: Green
+        
+        custom_id="create"               # UI: Create
+        
+    )
     
     async def CreateVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Create VM
         
@@ -761,7 +840,15 @@ class MainMenu(View):
     
     
     # UI: Show VM info
-    @discord.ui.button(label="Show VM info", style=discord.ButtonStyle.blurple, custom_id="info")
+    @discord.ui.button(
+        
+        label="Show VM info",              # UI: Show VM info
+        
+        style=discord.ButtonStyle.blurple, # UI: Blurple
+        
+        custom_id="info"                   # UI: Info
+        
+    )
     
     async def ShowInfo(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Show VM info
         
@@ -791,7 +878,15 @@ class MainMenu(View):
     
     
     # UI: Delete VM
-    @discord.ui.button(label="Delete VM", style=discord.ButtonStyle.red, custom_id="delete")
+    @discord.ui.button(
+        
+        label="Delete VM",             # UI: Delete VM
+        
+        style=discord.ButtonStyle.red, # UI: Red
+        
+        custom_id="delete"             # UI: Delete
+        
+    )
     
     async def DeleteVM(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Delete VM
         
@@ -821,7 +916,15 @@ class MainMenu(View):
 
 
     # UI: Configure your info
-    @discord.ui.button(label="Configure your info", style=discord.ButtonStyle.gray, custom_id="userdata")
+    @discord.ui.button(
+        
+        label="Configure your info",    # UI: Configure your info
+        
+        style=discord.ButtonStyle.gray, # UI: Gray
+        
+        custom_id="userdata"            # UI: Userdata
+        
+    )
     
     async def EditConf(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Configure your info
         
@@ -833,7 +936,13 @@ class MainMenu(View):
 #------------------------------------------------------------------------#
 
 # Show Menu command on Discord
-@bot.command(name="!", description="Terrakko is here!")
+@bot.command(
+    
+    name="!",                       # command: !
+    
+    description="Terrakko is here!" # Terrakko is here!
+    
+)
 
 async def ShowMenu(ctx): # Show Menu command
     global now_user_id
@@ -871,7 +980,8 @@ async def ShowMenu(ctx): # Show Menu command
 
 class DeleteDB(View):
     
-    def __init__(self, ctx, timeout=config.TIME): # Initialize the class
+    # Initialize the class
+    def __init__(self, ctx, timeout=config.TIME):
         
         # timeout = 180 sec
         super().__init__(timeout=timeout)
@@ -881,7 +991,15 @@ class DeleteDB(View):
     
     
     # UI: Yes button
-    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green, custom_id="yes")
+    @discord.ui.button(
+        
+        label="Yes",                     # UI: Yes
+        
+        style=discord.ButtonStyle.green, # UI: Green
+        
+        custom_id="yes"                  # UI: Yes
+    
+    )
     
     async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
         
@@ -893,7 +1011,15 @@ class DeleteDB(View):
     
     
     # UI: No button
-    @discord.ui.button(label="No", style=discord.ButtonStyle.red, custom_id="no")
+    @discord.ui.button(
+        
+        label="No",                    # UI: No
+        
+        style=discord.ButtonStyle.red, # UI: Red
+        
+        custom_id="no"                 # UI: No
+        
+    )
     
     async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
         
@@ -905,9 +1031,16 @@ class DeleteDB(View):
 #------------------------------------------------------------------------#
 
 # Delete Database command on Discord
-@bot.command(name="delete_db", description="Delete the all users data")
+@bot.command(
+    
+    name="delete_db", # Command name        # command: delete_db
+    
+    description="Delete the all users data" # Delete the all users data
+    
+)
 
-async def delete_db(ctx): # Delete Database command
+# Delete Database command
+async def delete_db(ctx):
     
     # message: Delete user data
     # ctx.send("Delete user data", ephemeral=True)
