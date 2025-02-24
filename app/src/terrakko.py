@@ -358,7 +358,7 @@ class OperateVMPower(View):
             if self.status["status"] == "stopped": # status: stopped
                 
                 # message: Start VM
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nStart VM", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nStart VM", ephemeral=True)
                 
                 # Start VM instance
                 proxmox_ve.StartInstance(self.region, self.vmid)
@@ -369,7 +369,7 @@ class OperateVMPower(View):
             else: # status: running
                 
                 # message: VM is already running
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already running.", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nVM is already running.", ephemeral=True)
 
         else: # Illegal operation
             
@@ -398,7 +398,7 @@ class OperateVMPower(View):
             if self.status["status"] == "running": # status: running
                 
                 # message: Shutdown VM
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nShutdown VM", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nShutdown VM", ephemeral=True)
                 
                 # Shutdown VM instance
                 proxmox_ve.ShutdownInstance(self.region, self.vmid)
@@ -409,7 +409,7 @@ class OperateVMPower(View):
             else: # status: stopped
                 
                 # message: VM is already stopped
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nVM is already stopped.", ephemeral=True)
             
         else: # Illegal operation
             
@@ -438,7 +438,7 @@ class OperateVMPower(View):
             if self.status["status"] == "running": # status: running
                 
                 # message: Reboot VM
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nReboot VM", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nReboot VM", ephemeral=True)
                 
                 # Reboot VM instance
                 proxmox_ve.RebootInstance(self.region, self.vmid)
@@ -449,7 +449,7 @@ class OperateVMPower(View):
             else: # status: stopped
                 
                 # message: VM is already stopped
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nVM is already stopped.", ephemeral=True)
 
         else: # Illegal operation
             
@@ -478,7 +478,7 @@ class OperateVMPower(View):
             if self.status["status"] == "running": # status: running
                 
                 # message: Stop VM
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nStop VM", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nStop VM", ephemeral=True)
                 
                 # Stop VM instance
                 proxmox_ve.StopInstance(self.region, self.vmid)
@@ -489,7 +489,7 @@ class OperateVMPower(View):
             else: # status: stopped
                 
                 # message: VM is already stopped
-                await interaction.response.send_message(f"User: {self.ctx.author.name}\nVM is already stopped.", ephemeral=True)
+                await interaction.response.send_message(f"User: {interaction.user.name}\nVM is already stopped.", ephemeral=True)
         
         else: # Illegal operation
             
@@ -535,7 +535,7 @@ class SelectVMNameTab(View):
         # Get VM status
         status = await proxmox_ve.GetVMStatus(val[0], val[1])
         
-        if re.match(f"{self.ctx.author.id}", val[2]) and status != None: # Check the VM owner
+        if re.match(f"{interaction.user.id}", val[2]) and status != None: # Check the VM owner
             
             # Get VM IP addresses
             ipv4, ipv6 = proxmox_ve.GetVMIPAddresses(val[0], val[1])
