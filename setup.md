@@ -98,7 +98,7 @@ cd app
 - Run Docker Compose command
 
 ```bash
-docker compose  -f "docker-compose.yaml" up
+docker compose up -d --build
 ```
 
 ---
