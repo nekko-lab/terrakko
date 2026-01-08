@@ -1,5 +1,11 @@
 # Terrakko
 
+[![CI/CD Pipeline](https://github.com/nekko-lab/terrakko/actions/workflows/ci.yml/badge.svg)](https://github.com/nekko-lab/terrakko/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/nekko-lab/terrakko/branch/main/graph/badge.svg)](https://codecov.io/gh/nekko-lab/terrakko)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+
 <img align="right" src="./logos/terrakko_icon.png" alt="Terrakko logo" width=250cm>
 
 Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Discord.
