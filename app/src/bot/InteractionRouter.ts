@@ -12,6 +12,7 @@ import { EmbedBuilder as CustomEmbedBuilder } from '../ui/EmbedBuilder';
 import { Logger } from '../utils/Logger';
 import { Validator } from '../utils/Validator';
 import { SessionManager } from '../domain/session/SessionManager';
+import { Session } from '../domain/session/Session';
 
 export class InteractionRouter {
   private vmService: VMService;
@@ -596,7 +597,7 @@ export class InteractionRouter {
   /**
    * ユーザーの最新セッションを検索
    */
-  private findUserSession(userId: string): any {
+  private findUserSession(userId: string): Session | null {
     return this.sessionManager.getLatestSessionByUser(userId);
   }
 }

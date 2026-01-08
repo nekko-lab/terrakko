@@ -111,7 +111,7 @@ export class SessionManager {
     let latestSession: Session | null = null;
     let latestExpiresAt: Date = new Date(0);
 
-    for (const [sessionId, session] of this.sessions.entries()) {
+    for (const [, session] of this.sessions.entries()) {
       if (session.ownerDiscordId === discordId && !session.isExpired()) {
         if (session.expiresAt > latestExpiresAt) {
           latestSession = session;
