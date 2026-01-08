@@ -17,9 +17,10 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 
 ## Environments
 
-- Docker
+- Node.js 18+ (TypeScript)
+- Docker (optional)
   - Debian GNU/Linux 12 bookworm
-  - [Python:3.11](https://hub.docker.com/_/python/)
+  - [Node:22](https://hub.docker.com/_/node/)
 
 ---
 
@@ -27,9 +28,9 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 
 ### Tools
 
-- `GCC`: 12.2.0 (Debian 12.2.0-14)
-- `pip`: 24.2 (Python3.11)
-- `libsqlite3-dev`: 3.46.1-1
+- `Node.js`: 18.0.0 or higher
+- `npm`: 11.6.2 or higher
+- `TypeScript`: 5.5.3
 - `Cloud-init`: 24.1.3-0 ubuntu1~22.04.5
 - [ubuntu 22.04 server-cloudimg](https://cloud-images.ubuntu.com/releases/22.04/release/)
 
@@ -43,22 +44,29 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
   | `VM.Audit`                | Audit the entire VM.                                    |
   | `VM.Allocate`             | Allocate resources to new VMs.                          |
   | `VM.Config.Cloudinit`     | API for Cloud-init related settings.                    |
-  | `SDN.Use`                 | Use SDN.                                                |
-  | `Datastore.AllocateSpace` | Required to allocate storage space to the data store.   |
 
-### Python Libraries ([`requirements.txt`](app/requirements.txt))
+### Node.js Dependencies ([`package.json`](app/package.json))
+
+#### Production Dependencies
 
   | Package                                                       | Version |
   | ------------------------------------------------------------- | ------- |
-  | [`aiosqlite`](https://aiosqlite.omnilib.dev/en/stable/)       | 0.20.0  |
-  | [`asyncio`](https://docs.python.org/ja/3/library/asyncio.html)| 3.4.3   |
-  | [`bcrypt`](https://github.com/pyca/bcrypt/)                   | 4.2.0   |
-  | [`discord.py`](https://discordpy.readthedocs.io/ja/latest/)   | 2.4.0   |
-  | [`proxmoxer`](https://proxmoxer.github.io/docs/latest/)       | 2.1.0   |
-  | [`pysqlite3`](https://github.com/coleifer/pysqlite3)          | 0.5.4   |
-  | [`python-dotenv`](https://github.com/theskumar/python-dotenv) | 1.0.1   |
-  | [`requests`](https://requests.readthedocs.io/en/latest/)      | 2.32.3  |
-  | [`urllib3`](https://urllib3.readthedocs.io/en/stable/)        | 2.2.3   |
+  | [`axios`](https://axios-http.com/)                            | ^1.7.7  |
+  | [`better-sqlite3`](https://github.com/WiseLibs/better-sqlite3)| ^11.6.0 |
+  | [`discord.js`](https://discord.js.org/)                       | ^14.14.1|
+  | [`dotenv`](https://github.com/motdotla/dotenv)                | ^16.4.5 |
+
+#### Development Dependencies
+
+  | Package                                                       | Version |
+  | ------------------------------------------------------------- | ------- |
+  | [`@types/better-sqlite3`](https://www.npmjs.com/package/@types/better-sqlite3) | ^7.6.11 |
+  | [`@types/jest`](https://www.npmjs.com/package/@types/jest)    | ^30.0.0 |
+  | [`@types/node`](https://www.npmjs.com/package/@types/node)    | ^20.19.27|
+  | [`jest`](https://jestjs.io/)                                  | ^30.2.0 |
+  | [`ts-jest`](https://kulshekhar.github.io/ts-jest/)            | ^29.4.6 |
+  | [`ts-node`](https://typestrong.org/ts-node/)                  | ^10.9.2 |
+  | [`typescript`](https://www.typescriptlang.org/)               | ^5.5.3  |
 
 ---
 
@@ -80,7 +88,15 @@ Terrakko is a provisioning tool that can operate Proxmox VE VM instances on Disc
 
 ## Architecture
 
-![flowchart](images/flowchart.png)
+Terrakko uses a **Layered Architecture** with clear separation of concerns:
+
+- **Presentation Layer**: Discord UI components (Embeds, Buttons, Select Menus)
+- **Application Layer**: Discord event handling and routing
+- **Domain Layer**: Business logic (VM, User, Session management)
+- **Infrastructure Layer**: External system communication (Proxmox API, Database)
+- **Utilities Layer**: Common utilities (Logger, Validator, Time)
+
+For detailed architecture documentation, see [architecture.md](architecture.md)
 
 ---
 
