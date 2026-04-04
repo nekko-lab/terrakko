@@ -145,23 +145,26 @@ async def WaitForTaskCompletion(interaction, vmid, task):
         return 1
     
     
-    while data["status"] == vm_status:  # running, stopped
-        
+    while data["status"] != vm_status:  # running, stopped
+
         try: # Get VM status
-            
+
             # current status
             data = proxmox_ve.node.qemu(vmid).status.current.get()
-            
-            print({vmid} is data["status"])
-            
+
+            print(f"{vmid}: {data['status']}")
+
             await asyncio.sleep(5)
-            
-        except ConnectionError as e: # Connection error
-            
-            print(f"Connection error: {e}")
-            
+
+        except Exception as e: # VM not found or connection error
+
+            print(f"Error getting VM status: {e}")
+
+            if task == "delete": # VM deleted, no longer exists
+                break
+
             await asyncio.sleep(5)
-            
+
             continue
     
     
@@ -652,8 +655,8 @@ class ProfileConfigurationForm(Modal):
         
         for vmname in self.vmname: # send message
             
-            # message: VM Name, User Name, Password, SSH Key
-            msg += f"VM Name:\t{interaction.user.id}-{vmname}\nUser Name:\t{userlist[2]}\nPassword:\t||{userlist[3]}||\nSSH Key:\t||{userlist[4]}||\n"
+            # message: VM Name, User Name, SSH Key (password is hashed, not displayed)
+            msg += f"VM Name:\t{interaction.user.id}-{vmname}\nUser Name:\t{userlist[2]}\nPassword:\t(set)\nSSH Key:\t||{userlist[4]}||\n"
         
         
         msg += "\nDo you want to create this?"
@@ -718,8 +721,8 @@ class SetUserInfoForm(Modal):
         
         self.add_item(self.ciname) # Add item
         
-        # cipass: Password
-        self.cipass = TextInput(label="Password", style=TextStyle.short, default=userdata[3], required=False)
+        # cipass: Password (do not prefill with stored hash)
+        self.cipass = TextInput(label="Password", style=TextStyle.short, required=False)
         
         self.add_item(self.cipass) # Add item
         
@@ -1111,41 +1114,41 @@ class DeleteDB(View):
     async def yes(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: Yes
         
         if self.userses.set_current_user() == interaction.user.id: # Check the user id
-            
+
             # Delete user data
-            db.delete_database()
-            
+            await db.delete_database()
+
             # message: User data deleted
-            interaction.response.send_message("User data deleted", ephemeral=True)
-            
+            await interaction.response.send_message("User data deleted", ephemeral=True)
+
         else: # Illegal operation
-            
+
             # message: Illegal operation
-            interaction.response.send_message("Illegal operation!", ephemeral=True)
-    
-    
+            await interaction.response.send_message("Illegal operation!", ephemeral=True)
+
+
     # UI: No button
     @discord.ui.button(
-        
+
         label="No",                    # UI: No
-        
+
         style=discord.ButtonStyle.red, # UI: Red
-        
+
         custom_id="no"                 # UI: No
-        
+
     )
-    
+
     async def no(self, interaction: discord.Interaction, button: discord.Button) -> None: # Function: No
-        
+
         if self.userses.set_current_user() == interaction.user.id: # Check the user id
-            
+
             # message: Canceled
-            interaction.response.send_message("Canceled", ephemeral=True)
-            
+            await interaction.response.send_message("Canceled", ephemeral=True)
+
         else: # Illegal operation
-            
+
             # message: Illegal operation
-            interaction.response.send_message("Illegal operation!", ephemeral=True)
+            await interaction.response.send_message("Illegal operation!", ephemeral=True)
 
 #------ Call database menu ----------------------------------------------#
 # Delete Database command                                                #

@@ -10,7 +10,7 @@
 import aiosqlite
 
 # Hashing
-import bcrypt
+import crypt
 
 # asyncio
 import asyncio
@@ -63,31 +63,38 @@ async def delete_database():
         
         os.remove(config.usrdata) # Delete the file
 
+#------ Hash password ---------------------------------------------------#
+# Hash a password using sha512crypt                                      #
+#------------------------------------------------------------------------#
+
+def hash_password(password: str) -> str:
+    return crypt.crypt(password, crypt.METHOD_SHA512)
+
 #------ Insert data -----------------------------------------------------#
 
 async def insert_data(userid, username, password, sshkey):
-    
+
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
-        
+
         async with conn.cursor() as cur: # Create a cursor
-            
+
             # Insert the data
-            await cur.execute(f"INSERT INTO {config.dbname}(uuid, username, password, sshkey) VALUES(?, ?, ?, ?)", (userid, username, password, sshkey))
-            
+            await cur.execute(f"INSERT INTO {config.dbname}(uuid, username, password, sshkey) VALUES(?, ?, ?, ?)", (userid, username, hash_password(password), sshkey))
+
             # Commit the changes
             await conn.commit()
 
 #------ Update data -----------------------------------------------------#
 
 async def update_data(userid, username, password, sshkey):
-    
+
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
-        
+
         async with conn.cursor() as cur: # Create a cursor
-            
+
             # Update the data
-            await cur.execute(f"UPDATE {config.dbname} SET username = ?, password = ?, sshkey = ? WHERE uuid = ?", (username, password, sshkey, userid))
-            
+            await cur.execute(f"UPDATE {config.dbname} SET username = ?, password = ?, sshkey = ? WHERE uuid = ?", (username, hash_password(password), sshkey, userid))
+
             # Commit the changes
             await conn.commit()
 
