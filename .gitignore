@@ -163,3 +163,5 @@ cython_debug/
 .env*
 !.env.temp
 db/
+
+app/node_modules/
