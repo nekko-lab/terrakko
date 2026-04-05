@@ -52,13 +52,14 @@ usrdata = db_path + dbname + '.db'
 #------ env file --------------------------------------------------------#
 
 # Proxmox VE
-PVE_HOST = os.getenv("PVE_HOST")
-PVE_USER = os.getenv("PVE_USER")
-PVE_PASS = os.getenv("PVE_PASS")
-PVE_TOKEN = os.getenv("PVE_TOKEN")
-PVE_SECRET = os.getenv("PVE_SECRET")
-PVE_REGION = json.loads(os.getenv("PVE_REGION"))
+PVE_HOST    = os.getenv("PVE_HOST")
+PVE_USER    = os.getenv("PVE_USER")
+PVE_TOKEN   = os.getenv("PVE_TOKEN")
+PVE_SECRET  = os.getenv("PVE_SECRET")
+PVE_REGION  = json.loads(os.getenv("PVE_REGION"))
 PVE_TEMP_ID = json.loads(os.getenv("PVE_TEMP_ID"))
+# SSL verification: set PVE_CA_CERT to the CA certificate path, or leave empty to use system CA bundle
+PVE_CA_CERT = os.getenv("PVE_CA_CERT", "")
 
 # Discord Bot
 DIS_TOKEN = os.getenv("DIS_TOKEN")

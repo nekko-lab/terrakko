@@ -10,7 +10,7 @@
 import aiosqlite
 
 # Hashing
-import crypt
+from passlib.hash import sha512_crypt
 
 # asyncio
 import asyncio
@@ -68,7 +68,7 @@ async def delete_database():
 #------------------------------------------------------------------------#
 
 def hash_password(password: str) -> str:
-    return crypt.crypt(password, crypt.METHOD_SHA512)
+    return sha512_crypt.hash(password)
 
 #------ Insert data -----------------------------------------------------#
 
@@ -118,15 +118,20 @@ async def get_userdata(userid):
 # This function gets a column from the database                          #
 #------------------------------------------------------------------------#
 
+ALLOWED_COLUMNS = {"uuid", "username", "sshkey"}
+
 async def get_column(column):
-    
+
+    if column not in ALLOWED_COLUMNS:
+        raise ValueError(f"Invalid column: {column}")
+
     async with aiosqlite.connect(config.usrdata) as conn: # Connect to the database
-        
+
         async with conn.cursor() as cur: # Create a cursor
-            
+
             # Get the column
             await cur.execute(f"SELECT {column} FROM {config.dbname}")
-            
+
             # Return the column
             return await cur.fetchall()
 

@@ -538,7 +538,7 @@ class SelectVMNameTab(View):
         # Get VM status
         status = await proxmox_ve.GetVMStatus(val[0], val[1])
         
-        if re.match(f"{interaction.user.id}", val[2]) and status != None: # Check the VM owner
+        if val[2].startswith(str(interaction.user.id)) and status is not None: # Check the VM owner
             
             # Get VM IP addresses
             ipv4, ipv6 = proxmox_ve.GetVMIPAddresses(val[0], val[1])
@@ -748,8 +748,8 @@ class SetUserInfoForm(Modal):
                 
                 if self.userses.set_current_user() == interaction.user.id: # Check the user id
                 
-                    # message: User Name, Password, SSH Key
-                    await interaction.response.send_message(f"User Name:\t{self.ciname}\nPassword:\t||{self.cipass}||\nSSH Key:\t||{self.sshkey}||\n\nDo you want to save this?", ephemeral=True)
+                    # message: User Name, SSH Key (password is not displayed)
+                    await interaction.response.send_message(f"User Name:\t{self.ciname}\nPassword:\t(set)\nSSH Key:\t||{self.sshkey}||\n\nDo you want to save this?", ephemeral=True)
                 
                 else: # Illegal operation
                     
@@ -1066,8 +1066,8 @@ async def ShowMenu(ctx): # Show Menu command
         
     else: # User data not found
         
-        # message: Create user data
-        await db.insert_data(ctx.author.id, "ncadmin", config.PVE_PASS, "")
+        # message: Create user data (initial password is empty; user must configure via "Configure your info")
+        await db.insert_data(ctx.author.id, "ncadmin", "", "")
         
         # message: Nice to meet you!
         await ctx.send(f"{ctx.author.name}, Nice to meet you!")

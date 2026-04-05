@@ -69,7 +69,9 @@ async def InitializePVEInfo():
     print('Initializing Proxmox VE info...')
     
     # Set up the Proxmox VE API
-    pve = ProxmoxAPI(config.PVE_HOST, user=config.PVE_USER, token_name=config.PVE_TOKEN, token_value=config.PVE_SECRET, verify_ssl=False)
+    # verify_ssl: True (system CA), path string (custom CA cert), or False (disabled - not recommended)
+    verify_ssl = config.PVE_CA_CERT if config.PVE_CA_CERT else True
+    pve = ProxmoxAPI(config.PVE_HOST, user=config.PVE_USER, token_name=config.PVE_TOKEN, token_value=config.PVE_SECRET, verify_ssl=verify_ssl)
     
     # Region
     index  = random.randint(0, len(config.PVE_REGION) - 1)
@@ -347,7 +349,7 @@ def GetNodeVM(author_id):
                 
                 if 100 <= int(vm['vmid']) < 90000                              # Check if the VM ID is valid
                 
-                if re.match(f"{author_id}", vm['name'])                        # Check if the VM name matches the author ID
+                if vm['name'].startswith(str(author_id))                        # Check if the VM name matches the author ID
                 
             ], 
             
