@@ -32,11 +32,6 @@ import re
 # config.py
 import config
 
-# proxmox_ve.py
-import proxmox_ve
-
-
-
 #------ Init variable ---------------------------------------------------#
 # Proxmox VE, region, template ID, and node                              #
 #------------------------------------------------------------------------#
@@ -47,46 +42,55 @@ ARGS = sys.argv
 # Proxmox VE
 pve     = ""
 
-# Region
-region  = ""
-
-# VM template ID
-temp_id = 0
-
-# Node
-node    = ""
-
 #------ Initialize Proxmox VE info --------------------------------------#
 # Set up the Proxmox VE API and get the region, template ID, and node    #
 #------------------------------------------------------------------------#
 
 async def InitializePVEInfo():
     global pve, region, temp_id, node # Declare global variables
-    
+
     print('Initializing Proxmox VE info...')
-    
+        
     # Set up the Proxmox VE API
     # verify_ssl: True (system CA), path string (custom CA cert), or False (disabled - not recommended)
     verify_ssl = config.PVE_CA_CERT if config.PVE_CA_CERT else True
     pve = ProxmoxAPI(config.PVE_HOST, user=config.PVE_USER, token_name=config.PVE_TOKEN, token_value=config.PVE_SECRET, verify_ssl=verify_ssl)
-    
+
     # Region
-    index  = random.randint(0, len(config.PVE_REGION) - 1)
-    region = config.PVE_REGION[index]
-    
-    # Node
-    node = pve.nodes(region)
-    
-    # VM template ID
-    temp_id = int(config.PVE_TEMP_ID[index])
-    
+    region, node, temp_id = await GetRegion()
+
     print('Proxmox VE info initialized')
+
+#------ Get Region ------------------------------------------------------#
+# Get region, template ID, and node                                      #
+#------------------------------------------------------------------------#
+
+async def GetRegion():
+    min_count = int('inf')
+    selected_index = 0
+
+    for i, r in enumerate(config.PVE_REGION): # Iterate through regions to find the one with the fewest running VMs 
+        try:
+            vms = await asyncio.to_thread(pve.nodes(r).qemu.get)
+            running = sum(1 for vm in vms if vm.get('status') == 'running' and 100 <= int(vm['vmid']) < 90000)
+            if running < min_count:
+                min_count = running
+                selected_index = i
+        except Exception as e:
+            print(f"GetRegion: skipping {r} due to error: {e}")
+            continue
+
+    region  = config.PVE_REGION[selected_index]
+    node    = pve.nodes(region)
+    temp_id = int(config.PVE_TEMP_ID[selected_index])
+    print(f"GetRegion: selected {region} (running VMs: {min_count})")
+    return region, node, temp_id
 
 #------ Start instance --------------------------------------------------#
 # Start a VM instance with the given VM ID                               #
 #------------------------------------------------------------------------#
 
-def StartInstance(r, vmid):
+async def StartInstance(r, vmid):
     
     if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
         
@@ -114,7 +118,7 @@ def StartInstance(r, vmid):
 # Stop a VM instance with the given VM ID                                 #
 #-------------------------------------------------------------------------#
 
-def StopInstance(r, vmid):
+async def StopInstance(r, vmid):
     
     if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
         
@@ -142,7 +146,7 @@ def StopInstance(r, vmid):
 # Shutdown a VM instance with the given VM ID                             #
 #-------------------------------------------------------------------------#
 
-def ShutdownInstance(r, vmid):
+async def ShutdownInstance(r, vmid):
     
     if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
         
@@ -170,7 +174,7 @@ def ShutdownInstance(r, vmid):
 # Reboot a VM instance with the given VM ID                               #
 #-------------------------------------------------------------------------#
 
-def RebootInstance(r, vmid):
+async def RebootInstance(r, vmid):
     
     if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
         
