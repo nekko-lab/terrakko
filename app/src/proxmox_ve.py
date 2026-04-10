@@ -32,9 +32,6 @@ import re
 # config.py
 import config
 
-# db.py
-import db
-
 # proxmox_ve.py
 import proxmox_ve
 

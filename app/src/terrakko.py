@@ -36,9 +36,6 @@ import re
 # config.py
 import config
 
-# db.py
-import db
-
 # proxmox_ve.py
 import proxmox_ve
 
@@ -278,7 +275,8 @@ class ConfirmAndExecute(View):
         elif self.mode == "userdata": # mode: userdata
             
             # message: Saving user data
-            await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
+            # TODO(Phase3): replace with tag-based flow
+            # await db.update_data(interaction.user.id, self.ciname, self.cipass, self.sshkey)
             
             # message: User data saved
             await interaction.response.send_message("Tasks completed", ephemeral=True)
@@ -639,15 +637,11 @@ class ProfileConfigurationForm(Modal):
             return 0
         
         
-        # Get user data
-        userlist = await db.get_userdata(interaction.user.id)
-        
-        if len(userlist) != 5: # User data not found.
-            
-            # message: User data not found
-            await interaction.response.send_message("User data not found.", ephemeral=True)
-            
-            return 0
+        # TODO(Phase3): remove DB-based user data lookup
+        # userlist = await db.get_userdata(interaction.user.id)
+        # if len(userlist) != 5:
+        #     await interaction.response.send_message("User data not found.", ephemeral=True)
+        #     return 0
         
         
         # init msg val
@@ -1035,7 +1029,8 @@ class MainMenu(View):
         if self.userses.set_current_user() == interaction.user.id:
             
             # message: Configure your info
-            await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(interaction.user.id), "Configure your info."))
+            # TODO(Phase3): remove DB dependency
+            # await interaction.response.send_modal(SetUserInfoForm(self.ctx, await db.get_userdata(interaction.user.id), "Configure your info."))
         
         else:
             
@@ -1059,18 +1054,13 @@ async def ShowMenu(ctx): # Show Menu command
     # Initialize PVE Info
     await proxmox_ve.InitializePVEInfo()
     
-    if ctx.author.id in [row[0] for row in await db.get_column("uuid")]: # User data found
-        
-        # message: Hi $USER
-        await ctx.send(f"Hi {ctx.author.name}!")
-        
-    else: # User data not found
-        
-        # message: Create user data (initial password is empty; user must configure via "Configure your info")
-        await db.insert_data(ctx.author.id, "ncadmin", "", "")
-        
-        # message: Nice to meet you!
-        await ctx.send(f"{ctx.author.name}, Nice to meet you!")
+    # TODO(Phase3): remove DB-based user registration flow
+    # if ctx.author.id in [row[0] for row in await db.get_column("uuid")]:
+    #     await ctx.send(f"Hi {ctx.author.name}!")
+    # else:
+    #     await db.insert_data(ctx.author.id, "ncadmin", "", "")
+    #     await ctx.send(f"{ctx.author.name}, Nice to meet you!")
+    await ctx.send(f"Hi {ctx.author.name}!")
     
     
     print(f"now user is: {ctx.author.id}")
@@ -1116,7 +1106,8 @@ class DeleteDB(View):
         if self.userses.set_current_user() == interaction.user.id: # Check the user id
 
             # Delete user data
-            await db.delete_database()
+            # TODO(Phase3): remove DB deletion (DB is abolished)
+            # await db.delete_database()
 
             # message: User data deleted
             await interaction.response.send_message("User data deleted", ephemeral=True)
