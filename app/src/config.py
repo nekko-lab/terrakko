@@ -22,7 +22,7 @@ load_dotenv()
 #------ Config ----------------------------------------------------------#
 
 # Version
-version = "1.0.2"
+version = "0.2.0"
 
 # Logo
 LOGO = """
@@ -38,7 +38,7 @@ LOGO = """
 DOMAIN = os.getenv("DOMAIN")
 
 # Timeout
-TIME = 180
+TIME = 900
 
 #------ env file --------------------------------------------------------#
 
