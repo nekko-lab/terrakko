@@ -1,4 +1,4 @@
-# Terrakko コードベース概要 (v1.0.2)
+# Terrakko コードベース概要 (v0.2.0)
 
 > 調査日: 2026-04-05  
 > 対象ブランチ: v0.4
@@ -55,7 +55,7 @@ terrakko/
 
 | 変数 | 内容 |
 |------|------|
-| `version` | `"1.0.2"` |
+| `version` | `"0.2.0"` |
 | `DOMAIN` | VM のホスト名サフィックス (例: `.nekko.cloud`) |
 | `TIME` | UI タイムアウト秒数 (180秒) |
 | `db_path` / `dbname` / `usrdata` | SQLite ファイルパス (`./db/userdata.db`) |
