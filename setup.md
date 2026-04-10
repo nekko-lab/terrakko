@@ -8,7 +8,7 @@
   - [Role details](README.md#proxmox-ve-privileges-terrakkoaccess)
 
   ```shell
-  pveum role add TerrakkoAccess -privs "VM.Config.Cloudinit, VM.Allocate, VM.Audit, VM.Monitor, VM.PowerMgmt, VM.Clone"
+  pveum role add TerrakkoAccess -privs "VM.Config.Cloudinit, VM.Config.Options, VM.Allocate, VM.Audit, VM.Monitor, VM.PowerMgmt, VM.Clone"
   ```
 
 - Create new user `terrakko-agent@pve`
@@ -82,8 +82,8 @@ You can create VM templates by Ansible.
 - Make `.env` file
   - Proxmox VE token
   - Region data
+  - CA certificate path (optional)
   - Discord bot token
-  - Discord channel ID
 
 ---
 

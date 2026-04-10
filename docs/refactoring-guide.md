@@ -18,13 +18,12 @@
 - [ ] `migrate_tags.py` の作成と実施
 
 ## 4. Phase 4: Slash Command Interface
-- [ ] `/terrakko login` 実装
-- [ ] `/terrakko vm start` 実装 (Autocomplete)
-- [ ] `/terrakko vm stop` 実装
-- [ ] `/terrakko vm status` 実装
-- [ ] `/terrakko vm build` 実装 (Modal, Replica)
-- [ ] `/terrakko vm delete` 実装 (Double Confirmation)
-- [ ] DM 送信失敗時のフォールバック処理
+- [ ] `/vm start` 実装 (Autocomplete)
+- [ ] `/vm stop` 実装 (Autocomplete)
+- [ ] `/vm status` 実装
+- [ ] `/vm build` 実装 (Modal, Replica)
+- [ ] `/vm delete` 実装 (Double Confirmation)
+- [ ] DM 送信失敗時のフォールバック処理 (Ephemeral 代替)
 
 ## 5. Phase 5: Security & Deployment
 - [ ] Dockerfile の非 root 化

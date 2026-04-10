@@ -11,111 +11,101 @@
   - [Terrakkoとは？](#terrakkoとは)
   - [事前要件](#事前要件)
   - [使い方](#使い方)
-    - [メニューを呼び出す](#メニューを呼び出す)
-    - [ユーザ情報をTerrakkoに登録する](#ユーザ情報をterrakkoに登録する)
     - [VMを作成する](#vmを作成する)
-    - [VMの電源を操作する](#vmの電源を操作する)
+    - [VMを起動する](#vmを起動する)
+    - [VMを停止する](#vmを停止する)
+    - [VMのステータスを確認する](#vmのステータスを確認する)
     - [VMを削除する](#vmを削除する)
+  - [操作の通知について](#操作の通知について)
 
 ## Terrakkoとは？
 
-TerrakkoはDiscordから簡単な操作でNekko CloudのVMインスタンスの作成・変更・削除が行える対話型のコンソールです．  
-Terrakkoに予めユーザ名・パスワード・SSHキーを登録することで，Proxmox VEのWebコンソールにアクセスしなくても，VM作成からSSH接続までの一連の操作がDiscordとターミナルで完結します．  
+TerrakkoはDiscordから簡単な操作でNekko CloudのVMインスタンスの作成・起動・停止・削除が行える対話型のコンソールです。  
+スラッシュコマンド (`/vm`) を使用してVMを操作します。操作の完了はDiscordのDMで通知されます。
 
 ## 事前要件
 
-- SSH公開鍵の作成(パスワード認証を使用する場合は不要)
+- SSH公開鍵の作成（パスワード認証を使用する場合は不要）
 
 ## 使い方
 
-### メニューを呼び出す
-
-- メニューを呼び出すコマンドは `@terrakko !` または `trk !`
-  - `@terrakko !`: メンション + 空白 + !
-  - `trk !`: trk + !  
-- `Start`をクリックしてメインメニューを呼び出す
-
-    ![image1.png](/images/image1.png)
-
-- 各操作のセッションは180秒なのでセッションが切れた場合は再度コマンドを送信してください．
-
-### ユーザ情報をTerrakkoに登録する
-
-- メニューから `Configure your info` ボタンをクリックする
-- 入力フォームが表示されるので，指定の情報を入力する[^1]  
-
-    ![image2.png](/images/image2.png)
-
-[^1]: 後から情報の変更を行う際も同様の手順で可能です
+すべてのコマンドはスラッシュコマンド形式です。Discord のメッセージ入力欄に `/vm` と入力するとコマンド候補が表示されます。
 
 ### VMを作成する
 
-- `Create your VM` をクリック
-- VMの個数を選択[^2]  
+コマンド: `/vm build`
 
-    ![image3.png](/images/image3.png)
+1. `/vm build` を実行するとモーダル（入力フォーム）が表示されます。
+2. 以下の情報を入力します。
 
-- VMの名前を入力する 
-    
-    ![image4.png](/images/image4.png)
+   | 項目 | 内容 |
+   | :--- | :--- |
+   | VM Name | VM の名前 |
+   | Replica Count | 作成する VM の台数（複数台の場合は `name-1`, `name-2` と自動命名）|
+   | CPU Cores | CPU コア数 |
+   | Memory (MB) | メモリ容量 |
+   | Disk Size (GB) | ストレージ容量 |
+   | Username | Cloud-init ユーザー名 |
+   | Password | Cloud-init パスワード（入力値はメモリ内のみで保持し、永続化しません）|
+   | SSH Public Key | SSH 公開鍵（パスワード認証の場合は空白可）|
 
-- 作成されるVMの情報を確認する  
+3. 送信後、チャンネルに「ビルドを開始しました」と Ephemeral（自分にのみ表示）メッセージが届きます。
+4. ビルド完了後、DM で完了通知と IP アドレスが届きます。
 
-  ![image5.png](/images/image5.png)
+### VMを起動する
 
-  - `Yes`: VMを作成
-  - `No`:  キャンセル  
+コマンド: `/vm start [vmid]`
 
-    ![image6.png](/images/image6.png)
+1. `/vm start` を入力すると、自分が所有する停止中 (stopped) の VM が候補として表示されます。
+2. 起動したい VM を選択して実行します。
+3. チャンネルに「起動を開始しました」と Ephemeral メッセージが届きます。
+4. 起動完了後、DM で完了通知が届きます。
 
-[^2]: 一度に作成できるVMの最大数は5個までです
+### VMを停止する
 
-### VMの電源を操作する
+コマンド: `/vm stop [vmid]`
 
-- `Show VM info` をクリック  
-- 操作対象のVMを選択する  
-  - 表示されるVMはdev環境に存在するユーザ (ここではcyokozai) のVM  
-  - 試しに先ほど作成した `test` VMを選択する  
+1. `/vm stop` を入力すると、自分が所有する起動中 (running) の VM が候補として表示されます。
+2. 停止したい VM を選択して実行します。
+3. チャンネルに「停止を開始しました」と Ephemeral メッセージが届きます。
+4. 停止完了後、DM で完了通知が届きます。
 
-    ![image7.png](/images/image7.png)
+> **Note:** `stop` はシャットダウン（グレースフル停止）を行います。
 
-- 選択したVMの情報とVMの電源に関するボタンが表示される
-  - 表示される情報は以下の通り  
+### VMのステータスを確認する
 
-    | 項目      | 詳細                                          |
-    | :-------- | :-------------------------------------------- |
-    | VM Name   | DiscordのUUID + VMの名前                      |
-    | VMID      | PVEが管理するVM固有のID                       |
-    | Region    | VMのリージョン[mk/ur/tu]                      |
-    | Status    | VMの状態[running/stopped]                     |
-    | Host Name | Service Discoveryが提供するVM固有のドメイン名 |
-    | IPv4/v6   | VMのIPアドレス                                |
+コマンド: `/vm status [vmid]`
 
-    - 電源に関する操作は以下の通り  
-        `Start`: VMを起動する (Status: stoppedの場合のみ)  
-        `Shutdown`: VMをシャットダウンする (Status: runningの場合のみ)
-        `Reboot`: VMを再起動する (Status: runningの場合のみ)
-        `Stop`: VMを強制的に停止する [^3] (Status: runningの場合のみ)
+1. `/vm status` を入力すると、自分が所有する全 VM が候補として表示されます。
+2. 確認したい VM を選択して実行します。
+3. 以下の情報が Ephemeral メッセージで表示されます（自分にのみ表示）。
 
-    ![image8.png](/images/image8.png)
-
-[^3]: `Stop` は正常終了ではないため，通常は `Shutdown` の使用を推奨する  
+   | 項目 | 詳細 |
+   | :--- | :--- |
+   | VM Name | VM の名前 |
+   | VMID | PVE が管理する VM 固有の ID |
+   | Region | VM のリージョン |
+   | Status | VM の状態 (running / stopped) |
+   | Host Name | Service Discovery が提供する VM 固有のドメイン名 |
+   | IPv4 / IPv6 | VM の IP アドレス |
 
 ### VMを削除する
 
-- `Delete VM` をクリック
-- 削除対象のVMを選択する  
-  - 表示されるVMはdev環境に存在するユーザ (ここではcyokozai) のVM  
-  - 試しに先ほど作成した `test` VMを選択する  
+コマンド: `/vm delete [vmid]`
 
-    ![image9.png](/images/image9.png)
+> **Warning:** この操作は取り消せません。
 
-- 選択したVMの情報が表示される
+1. `/vm delete` を入力すると、自分が所有する全 VM が候補として表示されます。
+2. 削除したい VM を選択して実行します。
+3. 削除対象の VM 情報と「削除を確定する」ボタンが Ephemeral メッセージで表示されます。
+4. 内容を確認し「削除を確定する」ボタンをクリックします。
+5. 削除完了後、DM で完了通知が届きます。
 
-    ![image8.png](/images/image8.png)
+> **Note:** 起動中 (running) の VM は削除できません。先に `/vm stop` で停止してから削除してください。
 
-- VMの削除を実行するか最終確認を行う
-  - `Yes`: VMを削除  
-  - `No`:  キャンセル  
+## 操作の通知について
 
-    ![image10.png](/images/image10.png)
+- 各コマンドの実行受付は、チャンネルに **Ephemeral メッセージ**（自分にのみ表示）で即時通知されます。
+- 非同期処理の完了（またはエラー）は **DM** で通知されます。
+- DM の受信が無効になっている場合は、代わりにチャンネルへ Ephemeral メッセージで通知されます。
+- 操作の監視タイムアウトは **15 分**です。タイムアウト後は `/vm status` で現在の状態を確認してください。

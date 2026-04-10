@@ -19,31 +19,24 @@
 ## Config
 
 - `DOMAIN`: Host name of VM
-- `TIME`: Timeout (in seconds)
-
-## Database
-
-- `db_path`: The path of database directory
-- `dbname`: The database name
-- `usrdata`: The path of database
+- `TIME`: Monitoring timeout in seconds (default: 900 = 15 minutes)
 
 ## Environment Variables ([.env](app/.env-temp))
 
 ### Docker
 
-- `WORKDIR`: Directry name
+- `WORKDIR`: Directory name
 
 ### Proxmox VE
 
 - `PVE_HOST`: Proxmox VE Node Host IP Address
 - `PVE_USER`: Proxmox VE User (Don't use root)
-- `PVE_PASS`: Proxmox VE Password (No problem even if it's empty)
 - `PVE_TOKEN`: Proxmox VE Token Name
 - `PVE_SECRET`: Proxmox VE Token Secret
-- `PVE_REGION`: Proxmox VE Node Name
-- `PVE_TEMP_ID`: Proxmox VE VM Template ID
+- `PVE_REGION`: Proxmox VE Node Name (JSON array)
+- `PVE_TEMP_ID`: Proxmox VE VM Template ID (JSON array, 1:1 correspondence with PVE_REGION)
+- `PVE_CA_CERT`: Path to CA certificate file for SSL verification (leave empty to use system CA bundle)
 
 ### Discord Bot
 
 - `DIS_TOKEN`: Discord Bot Token
-- `DIS_CHANNEL_ID`: Discord Channel ID (integer)
