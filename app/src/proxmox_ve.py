@@ -83,7 +83,9 @@ async def GetRegion():
     region  = config.PVE_REGION[selected_index]
     node    = pve.nodes(region)
     temp_id = int(config.PVE_TEMP_ID[selected_index])
+    
     print(f"GetRegion: selected {region} (running VMs: {min_count})")
+    
     return region, node, temp_id
 
 #------ Start instance --------------------------------------------------#
