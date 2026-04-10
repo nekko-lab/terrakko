@@ -1,5 +1,5 @@
 ###################### RUNNER ######################
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 SHELL ["/bin/bash", "-c"]
 
@@ -9,17 +9,15 @@ ARG dir
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG ${lang}
 
-WORKDIR /root/${dir}
+WORKDIR /home/${dir}
 
-COPY requirements.txt ./${dir} /root/${dir}
+COPY requirements.txt ./${dir} /home/${dir}
 
 RUN apt -y update && apt -y upgrade &&\
-    apt -y install gcc libsqlite3-dev &&\
+    apt -y install gcc &&\
     pip install --upgrade pip &&\
-    pip install --root-user-action=ignore -r requirements.txt &&\
+    pip install --home-user-action=ignore -r requirements.txt &&\
     rm requirements.txt &&\
-    cd /root/${dir} &&\
-    mkdir -p ./db &&\
     chmod +x terrakko.py
 
 CMD ["python", "terrakko.py"]

@@ -8,9 +8,9 @@ services:
       args:
           lang: 'C'
           dir: "${WORKDIR}"
-    working_dir: /root/${WORKDIR}
+    working_dir: /home/${WORKDIR}
     volumes:
-      - ./${WORKDIR}:/root/${WORKDIR}
+      - ./${WORKDIR}:/home/${WORKDIR}
     networks:
       - default
     environment:
