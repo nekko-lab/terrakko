@@ -1176,6 +1176,6 @@ async def delete_db(ctx):
 #------ Start Bot -------------------------------------------------------#
 
 # Run the bot
-bot.run(config.DIS_TOKEN)
+bot.run(config.DISCORD_TOKEN)
 
 #------------------------------------------------------------------------#

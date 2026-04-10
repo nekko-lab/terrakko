@@ -1,8 +1,6 @@
-aiosqlite==0.20.0
 discord.py==2.4.0
 passlib==1.7.4
 proxmoxer==2.1.0
-pysqlite3==0.5.4
 python-dotenv==1.0.1
 requests==2.32.3
 urllib3==2.2.3

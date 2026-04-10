@@ -40,15 +40,6 @@ DOMAIN = os.getenv("DOMAIN")
 # Timeout
 TIME = 180
 
-# Database path
-db_path = './db/'
-
-# Database name
-dbname = 'userdata'
-
-# Database
-usrdata = db_path + dbname + '.db'
-
 #------ env file --------------------------------------------------------#
 
 # Proxmox VE
@@ -62,7 +53,6 @@ PVE_TEMP_ID = json.loads(os.getenv("PVE_TEMP_ID"))
 PVE_CA_CERT = os.getenv("PVE_CA_CERT", "")
 
 # Discord Bot
-DIS_TOKEN = os.getenv("DIS_TOKEN")
-DIS_CHANNEL_ID = int(os.getenv("DIS_CHANNEL_ID"))
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
 #------------------------------------------------------------------------#
