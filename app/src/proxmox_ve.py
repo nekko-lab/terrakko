@@ -9,410 +9,386 @@
 # PVE API
 from proxmoxer import ProxmoxAPI
 
-# Tasks
-from proxmoxer.tools import Tasks
-
 # Asyncio
 import asyncio
 
 # urllib
 import urllib.parse
 
-# sys
-import sys
-
-# random
-import random
-
-# re
-import re
+# datetime
+import datetime
 
 #------ Import files ----------------------------------------------------#
 
 # config.py
 import config
 
-# db.py
-import db
-
-# proxmox_ve.py
-import proxmox_ve
-
-
-
 #------ Init variable ---------------------------------------------------#
-# Proxmox VE, region, template ID, and node                              #
+# Proxmox VE                                                             #
 #------------------------------------------------------------------------#
 
-# Arguments
-ARGS = sys.argv
-
 # Proxmox VE
-pve     = ""
-
-# Region
-region  = ""
-
-# VM template ID
-temp_id = 0
-
-# Node
-node    = ""
+pve = ""
 
 #------ Initialize Proxmox VE info --------------------------------------#
-# Set up the Proxmox VE API and get the region, template ID, and node    #
+# Set up the Proxmox VE API                                              #
 #------------------------------------------------------------------------#
 
 async def InitializePVEInfo():
-    global pve, region, temp_id, node # Declare global variables
-    
+    global pve
+
     print('Initializing Proxmox VE info...')
-    
-    # Set up the Proxmox VE API
-    pve = ProxmoxAPI(config.PVE_HOST, user=config.PVE_USER, token_name=config.PVE_TOKEN, token_value=config.PVE_SECRET, verify_ssl=False)
-    
-    # Region
-    index  = random.randint(0, len(config.PVE_REGION) - 1)
-    region = config.PVE_REGION[index]
-    
-    # Node
-    node = pve.nodes(region)
-    
-    # VM template ID
-    temp_id = int(config.PVE_TEMP_ID[index])
-    
+
+    # verify_ssl: True (system CA), path string (custom CA cert), or False (disabled - not recommended)
+    verify_ssl = config.PVE_CA_CERT if config.PVE_CA_CERT else True
+    pve = ProxmoxAPI(
+        config.PVE_HOST,
+        user=config.PVE_USER,
+        token_name=config.PVE_TOKEN,
+        token_value=config.PVE_SECRET,
+        verify_ssl=verify_ssl
+    )
+
     print('Proxmox VE info initialized')
+
+#------ Get Region ------------------------------------------------------#
+# Select the region with the fewest running VMs                          #
+#------------------------------------------------------------------------#
+
+async def GetRegion():
+    min_count     = float('inf')
+    selected_node = None
+    selected_temp = None
+
+    all_nodes = await asyncio.to_thread(pve.nodes.get)
+
+    for node_info in all_nodes:
+        if node_info.get('status') != 'online':
+            continue
+        r = node_info['node']
+        try:
+            vms = await asyncio.to_thread(pve.nodes(r).qemu.get)
+
+            # Find template by name (VMID >= 90000)
+            template_vm = next((vm for vm in vms if vm.get('name') == config.PVE_TEMP_NAME and int(vm['vmid']) >= 90000), None)
+            if template_vm is None:
+                print(f"GetRegion: template '{config.PVE_TEMP_NAME}' not found on {r}, skipping")
+                
+                continue
+
+            running = sum(1 for vm in vms if vm.get('status') == 'running' and 100 <= int(vm['vmid']) < 90000)
+            if running < min_count:
+                min_count     = running
+                selected_node = r
+                selected_temp = int(template_vm['vmid'])
+
+        except Exception as e:
+            print(f"GetRegion: skipping {r} due to error: {e}")
+            
+            continue
+
+    if selected_node is None:
+        raise RuntimeError(f"No node found with template '{config.PVE_TEMP_NAME}'")
+
+    node = pve.nodes(selected_node)
+    print(f"GetRegion: selected {selected_node} (template VMID: {selected_temp}, running VMs: {min_count})")
+    
+    return selected_node, node, selected_temp
+
+#------ Watch task ------------------------------------------------------#
+# Poll task status until completion or timeout                           #
+#------------------------------------------------------------------------#
+
+async def WatchTask(upid):
+    node_id  = upid.split(':')[1]
+    loop     = asyncio.get_running_loop()
+    deadline = loop.time() + config.TIME
+
+    while loop.time() < deadline:
+        status = await asyncio.to_thread(
+            pve.nodes(node_id).tasks(upid).status.get
+        )
+        if status['status'] == 'stopped':
+            return status.get('exitstatus') == 'OK', status
+        await asyncio.sleep(5)
+
+    return False, {'exitstatus': 'TIMEOUT'}
+
+#------ Audit log -------------------------------------------------------#
+# Record privileged operations to stdout                                 #
+#------------------------------------------------------------------------#
+
+def AuditLog(user_id, command, vm_id, result):
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    print(f"[AUDIT] [{timestamp}] [{user_id}] [{command}] [VM:{vm_id}] [{result}]")
 
 #------ Start instance --------------------------------------------------#
 # Start a VM instance with the given VM ID                               #
 #------------------------------------------------------------------------#
 
-def StartInstance(r, vmid):
-    
-    if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
-        
+async def StartInstance(r, vmid):
+
+    if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
-        
-    else: # Start the VM instance
-        
-        if pve.nodes(r).qemu(vmid).status.current.get()['status'] == "stopped": # Check if the VM is not running
-            
-            print(f"Starting VM ID: {vmid}")
-            
-            # Set the VM status to running
-            start_task = pve.nodes(r).qemu(vmid).status.start.post()
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, start_task)
-            
-            print(f"Started VM ID: {vmid}")
-            
-        else: # The VM is already running
-            
-            print(f"VM ID {vmid} is already running")
+        return None
 
-#------ Stop instance ----------------------------------------------------#
-# Stop a VM instance with the given VM ID                                 #
-#-------------------------------------------------------------------------#
+    current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
-def StopInstance(r, vmid):
-    
-    if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
-        
+    if current['status'] != 'stopped':
+        print(f"VM ID {vmid} is already running")
+        return None
+
+    print(f"Starting VM ID: {vmid}")
+    upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.start.post)
+    return upid
+
+#------ Stop instance ---------------------------------------------------#
+# Force-stop a VM instance with the given VM ID                         #
+#------------------------------------------------------------------------#
+
+async def StopInstance(r, vmid):
+
+    if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
-        
-    else: # Stop the VM instance
-        
-        if pve.nodes(r).qemu(vmid).status.current.get()['status'] != "stopped": # Check if the VM is not stopped
-            
-            print(f"Stopping VM ID: {vmid}")
-            
-            # Set the VM status to stopped
-            stop_task = pve.nodes(r).qemu(vmid).status.stop.post()
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, stop_task)
-            
-            print(f"Stopped VM ID: {vmid}")
-            
-        else: # The VM is already stopped
-            
-            print(f"VM ID {vmid} is already stopped")
+        return None
 
-#------ Shutdown instance ------------------------------------------------#
-# Shutdown a VM instance with the given VM ID                             #
-#-------------------------------------------------------------------------#
+    current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
-def ShutdownInstance(r, vmid):
-    
-    if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
-        
+    if current['status'] == 'stopped':
+        print(f"VM ID {vmid} is already stopped")
+        return None
+
+    print(f"Stopping VM ID: {vmid}")
+    upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.stop.post)
+    return upid
+
+#------ Shutdown instance -----------------------------------------------#
+# Gracefully shut down a VM instance with the given VM ID               #
+#------------------------------------------------------------------------#
+
+async def ShutdownInstance(r, vmid):
+
+    if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
-        
-    else: # Shutdown the VM instance
-        
-        if pve.nodes(r).qemu(vmid).status.current.get()['status'] == "running": # Check if the VM is running
-            
-            print(f"Shutting down VM ID: {vmid}")
-            
-            # Set the VM status to shutdown
-            shutdown_task = pve.nodes(r).qemu(vmid).status.shutdown.post()
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, shutdown_task)
-            
-            print(f"Shutdown VM ID: {vmid}")
-            
-        else: # The VM is not running
-            
-            print(f"VM ID {vmid} is not running")
+        return None
 
-#------ Reboot instance --------------------------------------------------#
-# Reboot a VM instance with the given VM ID                               #
-#-------------------------------------------------------------------------#
+    current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
-def RebootInstance(r, vmid):
-    
-    if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
-        
-        print("Invalid VM ID")
-        
-    else: # Reboot the VM instance
-        
-        if pve.nodes(r).qemu(vmid).status.current.get()['status'] == "running": # Check if the VM is running
-            
-            print(f"Rebooting VM ID: {vmid}")
-            
-            # Set the VM status to reboot
-            reboot_task = pve.nodes(r).qemu(vmid).status.reboot.post()
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, reboot_task)
-            
-            print(f"Rebooted VM ID: {vmid}")
-            
-        else: # The VM is not running
-            
-            print(f"VM ID {vmid} is not running")
+    if current['status'] != 'running':
+        print(f"VM ID {vmid} is not running")
+        return None
 
-#------ Create instance --------------------------------------------------#
-# Create a VM instance                                                    #
-#-------------------------------------------------------------------------#
+    print(f"Shutting down VM ID: {vmid}")
+    upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.shutdown.post)
+    return upid
 
-async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey):
-    
-    if int(clone_vm_id) > 90000 or int(clone_vm_id) < 100: # Check if the VM ID is valid
-        
+#------ Reboot instance -------------------------------------------------#
+# Reboot a VM instance with the given VM ID                             #
+#------------------------------------------------------------------------#
+
+async def RebootInstance(r, vmid):
+
+    if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
     
-    else: # Create the VM instance
-        
-        try: # Try to create the VM instance
-            
-            print("Creating VM...")
-            print(f"VM ID: {clone_vm_id}\tVM Name: {vm_name}")
-            print("Cloning VM...")
-            
-            # Set the VM status to clone
-            clone_task = node.qemu(temp_id).clone.create(newid=clone_vm_id, name=vm_name, pool='dev')
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, clone_task)
-        
-            print(f"Cloned VM ID: {clone_vm_id}")
-            
-            # Initialize the VM instance
-            await InitializeInstance(clone_vm_id, ciuser, passwd, sshkey)
-            
-        except Exception as e: # Catch any exceptions
-            
-            print(f"Creation failed: {e}")
+        return None
 
-#------ Initialize instance ----------------------------------------------#
-# Initialize a VM instance with the given VM ID, CI user, password, and   #
-# SSH key                                                                 #
-#-------------------------------------------------------------------------#
+    current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
-async def InitializeInstance(vmid, ciuser, passwd, sshkey):
+    if current['status'] != 'running':
+        print(f"VM ID {vmid} is not running")
     
-    try: # Try to initialize the VM instance
+        return None
+
+    print(f"Rebooting VM ID: {vmid}")
+    upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.reboot.post)
+    
+    return upid
+
+#------ Create instance -------------------------------------------------#
+# Clone a template and initialize with Cloud-init                       #
+#------------------------------------------------------------------------#
+
+async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_user_id, cpu: int, memory: int, disk: int):
+
+    if int(clone_vm_id) > 90000 or int(clone_vm_id) < 100:
+        print("Invalid VM ID")
+
+        return None
+
+    try:
+        _, current_node, current_temp_id = await GetRegion()
+
+        print(f"Creating VM... ID: {clone_vm_id}  Name: {vm_name}")
+        print("Cloning VM...")
+
+        clone_task = await asyncio.to_thread(current_node.qemu(current_temp_id).clone.create, newid=clone_vm_id, name=vm_name, pool='dev')
+
+        ok, _ = await WatchTask(clone_task)
+        if not ok:
+            raise RuntimeError(f"Clone failed for VM {clone_vm_id}")
+
+        print(f"Cloned VM ID: {clone_vm_id}")
+
+        # Assign ownership tag immediately after clone
+        await asyncio.to_thread(current_node.qemu(clone_vm_id).config.set, tags=f"discord_{discord_user_id}")
+        upid = await InitializeInstance(clone_vm_id, ciuser, passwd, sshkey, current_node, cpu, memory, disk)
+        AuditLog(discord_user_id, "build", clone_vm_id, "started")
         
-        print(f"Initializing VM...")
+        return upid
+
+    except Exception as e:
+        print(f"Creation failed: {e}")
+        AuditLog(discord_user_id, "build", clone_vm_id, f"failed: {e}")
         
-        # Set the VM status to initialize
-        node.qemu(vmid).config.set(
-            
-            ciuser=ciuser,                                              # Cloud-init user
-            
-            cipassword=passwd,                                          # Cloud-init password
-            
-            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='') # Cloud-init SSH key
-            
+        return None
+
+#------ Initialize instance ---------------------------------------------#
+# Apply Cloud-init config and start the VM                              #
+#------------------------------------------------------------------------#
+
+async def InitializeInstance(vmid, ciuser, passwd, sshkey, current_node, cpu: int, memory: int, disk: int):
+
+    try:
+        print(f"Initializing VM ID: {vmid}...")
+        await asyncio.to_thread(
+            current_node.qemu(vmid).config.set,
+            cores=cpu,
+            memory=memory,
+            ciuser=ciuser,
+            cipassword=passwd,
+            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='')
         )
-        
-        # Start the VM instance
-        init_task = node.qemu(vmid).status.start.post()
-        
-        # Wait for the task to complete
-        Tasks.blocking_status(pve, init_task)
-        
+        await asyncio.to_thread(
+            current_node.qemu(vmid).resize.put,
+            disk='scsi0',
+            size=f"{disk}G"
+        )
+
+        upid = await asyncio.to_thread(current_node.qemu(vmid).status.start.post)
         print(f"Initialized VM ID: {vmid}")
         
-    except Exception as e: # Catch any exceptions
-        
-        print(f"Initalization failed: {e}")
+        return upid
 
-#------ Delete instance --------------------------------------------------#
-# Delete a VM instance with the given VM ID                               #
-#-------------------------------------------------------------------------#
-
-async def DeleteInstance(r, vmid):
-    
-    if int(vmid) > 90000 or int(vmid) < 100: # Check if the VM ID is valid
+    except Exception as e:
+        print(f"Initialization failed: {e}")
         
+        return None
+
+#------ Delete instance -------------------------------------------------#
+# Delete a stopped VM instance                                          #
+#------------------------------------------------------------------------#
+
+async def DeleteInstance(r, vmid, discord_user_id):
+
+    if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
-    
-    else: # Delete the VM instance
         
-        if pve.nodes(r).qemu(vmid).status.current.get()['status'] == "stopped": # Check if the VM is stopped
-            
-            print(f"Deleting VM ID: {vmid}")
-            
-            # Set the VM status to delete
-            delete_task = pve.nodes(r).qemu(vmid).delete()
-            
-            # Wait for the task to complete
-            Tasks.blocking_status(pve, delete_task)
-            
-            print(f"Deleted VM ID: {vmid}")
-            
-        else: # The VM is not stopped
-            
-            print(f"VM ID {vmid} is running, please stop it first!")
+        return None
 
-#------ Get VMID ---------------------------------------------------------#
-# Get the next available VM ID                                            #
-#-------------------------------------------------------------------------#
+    current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
-def GetVMID():
-    
-    try: # Try to get the next available VM ID
+    if current['status'] != 'stopped':
+        print(f"VM ID {vmid} is running, please stop it first!")
         
-        return pve.cluster.nextid.get()
+        return None
+
+    print(f"Deleting VM ID: {vmid}")
+    upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).delete)
+    AuditLog(discord_user_id, "delete", vmid, "started")
     
-    except Exception as e: # Catch any exceptions
-        
+    return upid
+
+#------ Get VMID --------------------------------------------------------#
+# Get the next available VM ID from the cluster                         #
+#------------------------------------------------------------------------#
+
+async def GetVMID():
+
+    try:
+        return await asyncio.to_thread(pve.cluster.nextid.get)
+    except Exception as e:
         print(f"Getting VM ID failed: {e}")
         
         return None
 
-#------ Get VM status ----------------------------------------------------#
-# Get the status of a VM instance with the given VM ID                    #
-#-------------------------------------------------------------------------#
+#------ Get VM status ---------------------------------------------------#
+# Get the current status of a VM instance                               #
+#------------------------------------------------------------------------#
 
 async def GetVMStatus(r, vmid):
-    
-    try: # Try to get the status of the VM instance
-        
-        return pve.nodes(r).qemu(vmid).status.current.get()
-    
-    except Exception as e: # Catch any exceptions
-        
+
+    try:
+        return await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
+    except Exception as e:
         print(f"Getting VM status failed: {e}")
         
         return None
 
-#------ Get all VM Status ------------------------------------------------#
-# Get the status of all VM instances                                      #
-#-------------------------------------------------------------------------#
+#------ Get node VM list ------------------------------------------------#
+# Get VMs owned by the given Discord user (tag-based)                   #
+#------------------------------------------------------------------------#
 
-def GetNodeVM(author_id):
-    
-    try: # Try to get the status of all VM instances
-        
-        print("Getting VM status")
-        
-        # Get the status of all VM instances
-        pve.nodes.get() # Catch exception if not logged in
-        
-        # Return the status of all VM instances sorted by VM ID
-        return sorted(
-            [
-            
-                [pve_node['node'], int(vm['vmid']), vm['name'], vm['status']]  # Node, VM ID, VM name, VM status
-                
-                for pve_node in pve.nodes.get()                                # Get the status of all nodes
-                
-                for vm in pve("nodes/{0}/qemu".format(pve_node['node'])).get() # Get the status of all VM instances
-                
-                if 100 <= int(vm['vmid']) < 90000                              # Check if the VM ID is valid
-                
-                if re.match(f"{author_id}", vm['name'])                        # Check if the VM name matches the author ID
-                
-            ], 
-            
-            key=lambda x: x[1]                                                 # Sort by VM ID
-        
-        )
-        
-    except Exception as e: # Catch any exceptions
-        
-        print(f"Getting VM status failed: {e}")
+async def GetNodeVM(author_id):
+
+    try:
+        tag   = f"discord_{author_id}"
+        nodes = await asyncio.to_thread(pve.nodes.get)
+
+        results = []
+        for pve_node in nodes:
+            vms = await asyncio.to_thread(pve.nodes(pve_node['node']).qemu.get)
+            for vm in vms:
+                if not (100 <= int(vm['vmid']) < 90000):
+                    continue
+                if tag in vm.get('tags', '').split(';'):
+                    results.append([pve_node['node'], int(vm['vmid']), vm['name'], vm['status']])
+
+        return sorted(results, key=lambda x: x[1])
+
+    except Exception as e:
+        print(f"Getting VM list failed: {e}")
         
         return None
 
-#------ Get VM IP addresses ----------------------------------------------#
-# Get the IP addresses of a VM instance with the given VM ID              #
-#-------------------------------------------------------------------------#
+#------ Get VM IP addresses ---------------------------------------------#
+# Get IPv4 and IPv6 addresses via QEMU Guest Agent                      #
+#------------------------------------------------------------------------#
 
-def GetVMIPAddresses(r, vmid):
-    
-    try: # Try to get the IP addresses of the VM instance
-        
+async def GetVMIPAddresses(r, vmid):
+
+    try:
         print(f"Getting IP addresses for VM ID: {vmid}")
-        
-        # Get the IP addresses of the VM instance
-        interfaces = pve.nodes(r).qemu(vmid).agent.get('network-get-interfaces')['result']
-        
-        # Return the IPv4 and IPv6 addresses
+
+        interfaces = await asyncio.to_thread(
+            pve.nodes(r).qemu(vmid).agent.get, 'network-get-interfaces'
+        )
+        interfaces = interfaces['result']
+
         ipv4_addresses = []
         ipv6_addresses = []
 
-        # Get the IP addresses
         for interface in interfaces:
-            
             for ip_info in interface.get('ip-addresses', []):
-                
-                if ip_info['ip-address-type'] == 'ipv4': # IPv4 address
-                    
+                if ip_info['ip-address-type'] == 'ipv4':
                     ipv4_addresses.append(ip_info['ip-address'])
-                    
-                elif ip_info['ip-address-type'] == 'ipv6': # IPv6 address
-                    
+                elif ip_info['ip-address-type'] == 'ipv6':
                     ipv6_addresses.append(ip_info['ip-address'])
 
-        
-        # Return the IP addresses
         return ipv4_addresses, ipv6_addresses
-    
-    except Exception as e: # Catch any exceptions
-        
+
+    except Exception as e:
         print(f"Getting IP addresses failed: {e}")
         
         return None, None
 
-#------ Initialize Proxmox VE info ----------------------------------------#
-# Initialize the Proxmox VE info                                           #
-#--------------------------------------------------------------------------#
+#------ Initialize Proxmox VE info --------------------------------------#
 
-try: # Try to initialize the Proxmox VE info
-    
+try:
     asyncio.run(InitializePVEInfo())
-    
-except Exception as e: # Catch any exceptions
-    
+except Exception as e:
     print(f"Proxmox VE info initialization failed: {e}")
     
     exit(1)
 
-#--------------------------------------------------------------------------#
+#------------------------------------------------------------------------#

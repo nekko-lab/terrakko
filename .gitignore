@@ -163,3 +163,8 @@ cython_debug/
 .env*
 !.env.temp
 db/
+
+app/node_modules/
+
+# CA certificates (place on server manually, never commit)
+certs/
