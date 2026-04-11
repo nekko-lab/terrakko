@@ -11,7 +11,8 @@ ENV LANG=${lang}
 
 WORKDIR /home/${dir}
 
-COPY requirements.txt ./${dir} /home/${dir}
+COPY requirements.txt ./
+COPY ./${dir}/ ./
 
 RUN apt -y update && apt -y upgrade && \
     apt -y install gcc && \
