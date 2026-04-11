@@ -70,21 +70,13 @@ async def GetRegion():
             vms = await asyncio.to_thread(pve.nodes(r).qemu.get)
 
             # Find template by name (VMID >= 90000)
-            template_vm = next(
-                (vm for vm in vms
-                 if vm.get('name') == config.PVE_TEMP_NAME
-                 and int(vm['vmid']) >= 90000),
-                None
-            )
+            template_vm = next((vm for vm in vms if vm.get('name') == config.PVE_TEMP_NAME and int(vm['vmid']) >= 90000), None)
             if template_vm is None:
                 print(f"GetRegion: template '{config.PVE_TEMP_NAME}' not found on {r}, skipping")
+                
                 continue
 
-            running = sum(
-                1 for vm in vms
-                if vm.get('status') == 'running'
-                and 100 <= int(vm['vmid']) < 90000
-            )
+            running = sum(1 for vm in vms if vm.get('status') == 'running' and 100 <= int(vm['vmid']) < 90000)
             if running < min_count:
                 min_count     = running
                 selected_node = r
@@ -92,6 +84,7 @@ async def GetRegion():
 
         except Exception as e:
             print(f"GetRegion: skipping {r} due to error: {e}")
+            
             continue
 
     if selected_node is None:
@@ -99,6 +92,7 @@ async def GetRegion():
 
     node = pve.nodes(selected_node)
     print(f"GetRegion: selected {selected_node} (template VMID: {selected_temp}, running VMs: {min_count})")
+    
     return selected_node, node, selected_temp
 
 #------ Watch task ------------------------------------------------------#
@@ -195,16 +189,19 @@ async def RebootInstance(r, vmid):
 
     if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
+    
         return None
 
     current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
     if current['status'] != 'running':
         print(f"VM ID {vmid} is not running")
+    
         return None
 
     print(f"Rebooting VM ID: {vmid}")
     upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.reboot.post)
+    
     return upid
 
 #------ Create instance -------------------------------------------------#
@@ -215,6 +212,7 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
 
     if int(clone_vm_id) > 90000 or int(clone_vm_id) < 100:
         print("Invalid VM ID")
+        
         return None
 
     try:
@@ -223,10 +221,7 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
         print(f"Creating VM... ID: {clone_vm_id}  Name: {vm_name}")
         print("Cloning VM...")
 
-        clone_task = await asyncio.to_thread(
-            current_node.qemu(current_temp_id).clone.create,
-            newid=clone_vm_id, name=vm_name, pool='dev'
-        )
+        clone_task = await asyncio.to_thread(current_node.qemu(current_temp_id).clone.create, newid=clone_vm_id, name=vm_name, pool='dev')
 
         ok, _ = await WatchTask(clone_task)
         if not ok:
@@ -235,18 +230,16 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
         print(f"Cloned VM ID: {clone_vm_id}")
 
         # Assign ownership tag immediately after clone
-        await asyncio.to_thread(
-            current_node.qemu(clone_vm_id).config.set,
-            tags=f"discord_{discord_user_id}"
-        )
-
+        await asyncio.to_thread(current_node.qemu(clone_vm_id).config.set, tags=f"discord_{discord_user_id}")
         upid = await InitializeInstance(clone_vm_id, ciuser, passwd, sshkey, current_node)
         AuditLog(discord_user_id, "build", clone_vm_id, "started")
+        
         return upid
 
     except Exception as e:
         print(f"Creation failed: {e}")
         AuditLog(discord_user_id, "build", clone_vm_id, f"failed: {e}")
+        
         return None
 
 #------ Initialize instance ---------------------------------------------#
@@ -257,20 +250,16 @@ async def InitializeInstance(vmid, ciuser, passwd, sshkey, current_node):
 
     try:
         print(f"Initializing VM ID: {vmid}...")
-
-        await asyncio.to_thread(
-            current_node.qemu(vmid).config.set,
-            ciuser=ciuser,
-            cipassword=passwd,
-            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='')
-        )
+        await asyncio.to_thread(current_node.qemu(vmid).config.set, ciuser=ciuser, cipassword=passwd, sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe=''))
 
         upid = await asyncio.to_thread(current_node.qemu(vmid).status.start.post)
         print(f"Initialized VM ID: {vmid}")
+        
         return upid
 
     except Exception as e:
         print(f"Initialization failed: {e}")
+        
         return None
 
 #------ Delete instance -------------------------------------------------#
@@ -281,17 +270,20 @@ async def DeleteInstance(r, vmid, discord_user_id):
 
     if int(vmid) > 90000 or int(vmid) < 100:
         print("Invalid VM ID")
+        
         return None
 
     current = await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
 
     if current['status'] != 'stopped':
         print(f"VM ID {vmid} is running, please stop it first!")
+        
         return None
 
     print(f"Deleting VM ID: {vmid}")
     upid = await asyncio.to_thread(pve.nodes(r).qemu(vmid).delete)
     AuditLog(discord_user_id, "delete", vmid, "started")
+    
     return upid
 
 #------ Get VMID --------------------------------------------------------#
@@ -304,6 +296,7 @@ async def GetVMID():
         return await asyncio.to_thread(pve.cluster.nextid.get)
     except Exception as e:
         print(f"Getting VM ID failed: {e}")
+        
         return None
 
 #------ Get VM status ---------------------------------------------------#
@@ -316,6 +309,7 @@ async def GetVMStatus(r, vmid):
         return await asyncio.to_thread(pve.nodes(r).qemu(vmid).status.current.get)
     except Exception as e:
         print(f"Getting VM status failed: {e}")
+        
         return None
 
 #------ Get node VM list ------------------------------------------------#
@@ -330,24 +324,18 @@ async def GetNodeVM(author_id):
 
         results = []
         for pve_node in nodes:
-            vms = await asyncio.to_thread(
-                pve(f"nodes/{pve_node['node']}/qemu").get
-            )
+            vms = await asyncio.to_thread(pve.nodes(pve_node['node']).qemu.get)
             for vm in vms:
                 if not (100 <= int(vm['vmid']) < 90000):
                     continue
                 if tag in vm.get('tags', '').split(';'):
-                    results.append([
-                        pve_node['node'],
-                        int(vm['vmid']),
-                        vm['name'],
-                        vm['status']
-                    ])
+                    results.append([pve_node['node'], int(vm['vmid']), vm['name'], vm['status']])
 
         return sorted(results, key=lambda x: x[1])
 
     except Exception as e:
         print(f"Getting VM list failed: {e}")
+        
         return None
 
 #------ Get VM IP addresses ---------------------------------------------#
@@ -378,6 +366,7 @@ async def GetVMIPAddresses(r, vmid):
 
     except Exception as e:
         print(f"Getting IP addresses failed: {e}")
+        
         return None, None
 
 #------ Initialize Proxmox VE info --------------------------------------#
@@ -386,6 +375,7 @@ try:
     asyncio.run(InitializePVEInfo())
 except Exception as e:
     print(f"Proxmox VE info initialization failed: {e}")
+    
     exit(1)
 
 #------------------------------------------------------------------------#
