@@ -222,7 +222,10 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
         print(f"Creating VM... ID: {clone_vm_id}  Name: {vm_name}")
         print("Cloning VM...")
 
-        clone_task = await asyncio.to_thread(current_node.qemu(current_temp_id).clone.create, newid=clone_vm_id, name=vm_name, pool='dev')
+        clone_kwargs = {"newid": clone_vm_id, "name": vm_name}
+        if config.PVE_POOL:
+            clone_kwargs["pool"] = config.PVE_POOL
+        clone_task = await asyncio.to_thread(current_node.qemu(current_temp_id).clone.create, **clone_kwargs)
 
         ok, _ = await WatchTask(clone_task)
         if not ok:

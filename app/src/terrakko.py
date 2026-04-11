@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.11
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 ##########################################################################
@@ -65,7 +65,8 @@ async def on_ready():
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
-    print(f"{interaction.user.id} triggered {interaction.data}")
+    cmd = interaction.data.get("name", "unknown") if interaction.data else "unknown"
+    print(f"{interaction.user.id} triggered /{cmd}")
 
 #------ Helpers ---------------------------------------------------------#
 

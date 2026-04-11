@@ -45,6 +45,7 @@ PVE_USER      = os.getenv("PVE_USER")
 PVE_TOKEN     = os.getenv("PVE_TOKEN")
 PVE_SECRET    = os.getenv("PVE_SECRET")
 PVE_TEMP_NAME = os.getenv("PVE_TEMP_NAME", "ubuntu24.04-General-template-v1.0.0")
+PVE_POOL      = os.getenv("PVE_POOL", "")
 
 # SSL verification: set PVE_CA_CERT to the CA certificate path, or leave empty to use system CA bundle
 PVE_CA_CERT   = os.getenv("PVE_CA_CERT", "")
