@@ -21,6 +21,12 @@
 | ---- | ---- | ---- |
 | `DISCORD_TOKEN` | ✓ | Discord Bot Token |
 
+### bw-agent（パスワード配送）
+
+| 変数 | 必須 | 説明 |
+| ---- | ---- | ---- |
+| `BW_AGENT_URL` | — | bw-agent の内部 URL（例: `http://bw-agent:8080`）。未設定の場合はパスワード共有をスキップし、PVE コンソールから変更するよう案内する |
+
 ### Docker
 
 | 変数 | 必須 | 説明 |
@@ -51,6 +57,9 @@ PVE_CA_CERT=
 
 # Discord
 DISCORD_TOKEN=your_discord_bot_token
+
+# bw-agent
+BW_AGENT_URL=http://bw-agent:8080
 
 # Docker
 WORKDIR=src
