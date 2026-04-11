@@ -48,8 +48,6 @@ import proxmox_ve
 #------ Initialize Bot --------------------------------------------------#
 
 intents = discord.Intents.default()
-intents.message_content = True
-intents.messages = True
 
 bot = commands.Bot(command_prefix="trk", case_insensitive=True, intents=intents, activity=discord.Game("Nekko Cloud"))
 
@@ -252,7 +250,8 @@ async def vm_status(interaction: discord.Interaction, vmid: str):
     embed.add_field(name="VMID",      value=str(vmid_int),                      inline=True)
     embed.add_field(name="Region",    value=node,                               inline=True)
     embed.add_field(name="Status",    value=status,                             inline=True)
-    embed.add_field(name="Host Name", value=f"vm{vmid_int}{config.DOMAIN}",     inline=False)
+    domain = config.DOMAIN or ""
+    embed.add_field(name="Host Name", value=f"vm{vmid_int}{domain}",            inline=False)
     embed.add_field(name="IPv4",      value="\n".join(ipv4) if ipv4 else "N/A", inline=True)
     embed.add_field(name="IPv6",      value="\n".join(ipv6) if ipv6 else "N/A", inline=True)
 
@@ -311,9 +310,6 @@ async def vm_stop(interaction: discord.Interaction, vmid: str):
 #------ /terrakko vm build ----------------------------------------------#
 
 class BuildModal(Modal, title="VM Build Configuration"):
-    cpu    = TextInput(label="CPU Cores",   placeholder="2",      required=True)
-    memory = TextInput(label="Memory (MB)", placeholder="2048",   required=True)
-    disk   = TextInput(label="Disk (GB)",   placeholder="20",     required=True)
     ciuser = TextInput(label="Username",    placeholder="ubuntu", required=True)
 
     def __init__(self, vm_name: str, replicas: int, sshkey: str):
@@ -334,7 +330,7 @@ class BuildModal(Modal, title="VM Build Configuration"):
 
                 continue
 
-            upid = await proxmox_ve.CreateInstance(vmid, name, str(self.ciuser), password, str(self.sshkey), interaction.user.id)
+            upid = await proxmox_ve.CreateInstance(vmid, name, self.ciuser.value, password, str(self.sshkey), interaction.user.id)
             if upid:
                 asyncio.create_task(monitor_and_notify_build(upid, interaction.user, interaction, name, int(vmid), password))
             else:
@@ -380,7 +376,8 @@ class DeleteConfirmView(View):
 
             return
 
-        upid = await proxmox_ve.DeleteInstance(self.node, self.vmid_int, self.user_id)
+        node = vm[0]
+        upid = await proxmox_ve.DeleteInstance(node, self.vmid_int, self.user_id)
         if upid is None:
             await interaction.response.send_message("削除に失敗しました。VM が起動中の場合は先に `/terrakko vm stop` で停止してください。", ephemeral=True)
 

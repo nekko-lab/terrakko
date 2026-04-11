@@ -101,9 +101,10 @@ async def GetRegion():
 
 async def WatchTask(upid):
     node_id  = upid.split(':')[1]
-    deadline = asyncio.get_event_loop().time() + config.TIME
+    loop     = asyncio.get_running_loop()
+    deadline = loop.time() + config.TIME
 
-    while asyncio.get_event_loop().time() < deadline:
+    while loop.time() < deadline:
         status = await asyncio.to_thread(
             pve.nodes(node_id).tasks(upid).status.get
         )
