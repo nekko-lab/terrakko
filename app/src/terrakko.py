@@ -25,11 +25,17 @@ from discord import app_commands
 # discord UI
 from discord.ui import TextInput, Modal, View
 
-# discord TextStyle
-from discord import TextStyle
-
 # asyncio
 import asyncio
+
+# secrets
+import secrets
+
+# string
+import string
+
+# requests (bw-agent HTTP call)
+import requests
 
 #------ Import files ----------------------------------------------------#
 
@@ -84,8 +90,47 @@ async def monitor_and_notify(upid, user, interaction, success_msg, fail_msg):
 async def get_owned_vm(user_id, vmid):
     """Return vm tuple [node, vmid_int, name, status] if user owns it, else None."""
     vms = await proxmox_ve.GetNodeVM(user_id) or []
-    
+
     return next((v for v in vms if str(v[1]) == str(vmid)), None)
+
+
+def generate_password(length: int = 10) -> str:
+    """Generate a random alphanumeric password using secrets."""
+    alphabet = string.ascii_letters + string.digits
+    
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+async def request_bw_send(password: str) -> str | None:
+    """POST password to bw-agent and return the Send URL, or None on failure."""
+    if not config.BW_AGENT_URL:
+        return None
+    try:
+        resp = await asyncio.to_thread(requests.post, f"{config.BW_AGENT_URL}/send", json={"text": password}, timeout=10)
+        if resp.status_code == 200:
+            return resp.json().get("url")
+    except Exception as e:
+        print(f"bw-agent request failed: {e}")
+    
+    return None
+
+
+async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, password):
+    """Watch a build task and deliver the generated password via bw-agent Send on success."""
+    ok, status = await proxmox_ve.WatchTask(upid)
+    if not ok:
+        exitstatus = status.get('exitstatus', 'UNKNOWN')
+        await send_dm_or_fallback(user, interaction, f"VM `{vm_name}` (VMID:{vmid_int}) のビルドに失敗しました。(exitstatus: {exitstatus})")
+        
+        return
+
+    send_url = await request_bw_send(password)
+    if send_url:
+        message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\n初期パスワード: {send_url}\n（このリンクは15分で失効します）")
+    else:
+        message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\nパスワードの共有に失敗しました。PVE WebコンソールのCloud-initから変更してください。")
+    
+    await send_dm_or_fallback(user, interaction, message)
 
 #------ Slash command group: /vm ----------------------------------------#
 
@@ -182,11 +227,10 @@ async def vm_stop(interaction: discord.Interaction, vmid: str):
 #------ /vm build -------------------------------------------------------#
 
 class BuildModal(Modal, title="VM Build Configuration"):
-    cpu    = TextInput(label="CPU Cores",   placeholder="2",       required=True)
-    memory = TextInput(label="Memory (MB)", placeholder="2048",    required=True)
-    disk   = TextInput(label="Disk (GB)",   placeholder="20",      required=True)
-    ciuser = TextInput(label="Username",    placeholder="ubuntu",  required=True)
-    cipass = TextInput(label="Password",    style=TextStyle.short, required=True)
+    cpu    = TextInput(label="CPU Cores",   placeholder="2",      required=True)
+    memory = TextInput(label="Memory (MB)", placeholder="2048",   required=True)
+    disk   = TextInput(label="Disk (GB)",   placeholder="20",     required=True)
+    ciuser = TextInput(label="Username",    placeholder="ubuntu", required=True)
 
     def __init__(self, vm_name: str, replicas: int, sshkey: str):
         super().__init__()
@@ -198,16 +242,17 @@ class BuildModal(Modal, title="VM Build Configuration"):
         await interaction.response.send_message(f"VM `{self.vm_name}` のビルドを開始しました。完了したら DM でお知らせします。", ephemeral=True)
 
         for i in range(self.replicas):
-            name = f"{self.vm_name}-{i+1}" if self.replicas > 1 else self.vm_name
-            vmid = await proxmox_ve.GetVMID()
+            name     = f"{self.vm_name}-{i+1}" if self.replicas > 1 else self.vm_name
+            password = generate_password()
+            vmid     = await proxmox_ve.GetVMID()
             if vmid is None:
                 await send_dm_or_fallback(interaction.user, interaction, f"VM `{name}` の VMID 取得に失敗しました。")
-                
+
                 continue
 
-            upid = await proxmox_ve.CreateInstance(vmid, name, str(self.ciuser), str(self.cipass), str(self.sshkey), interaction.user.id)
+            upid = await proxmox_ve.CreateInstance(vmid, name, str(self.ciuser), password, str(self.sshkey), interaction.user.id)
             if upid:
-                asyncio.create_task(monitor_and_notify(upid, interaction.user, interaction, f"VM `{name}` のビルドが完了しました。", f"VM `{name}` のビルドに失敗しました。"))
+                asyncio.create_task(monitor_and_notify_build(upid, interaction.user, interaction, name, int(vmid), password))
             else:
                 await send_dm_or_fallback(interaction.user, interaction, f"VM `{name}` のビルド開始に失敗しました。")
 
