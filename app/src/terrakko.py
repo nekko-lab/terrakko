@@ -58,7 +58,14 @@ active_sessions: set[int] = set()
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
+    if config.DISCORD_GUILD_ID:
+        guild = discord.Object(id=config.DISCORD_GUILD_ID)
+        bot.tree.copy_global_to(guild=guild)
+        await bot.tree.sync(guild=guild)
+        print(f"Commands synced to guild {config.DISCORD_GUILD_ID} (immediate)")
+    else:
+        await bot.tree.sync()
+        print("Commands synced globally (up to 1 hour to propagate)")
     print(config.LOGO)
     print(f"Terrakko v{config.version} ready")
     print(f"Logged in as {bot.user}")
