@@ -132,9 +132,11 @@ async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, p
     
     await send_dm_or_fallback(user, interaction, message)
 
-#------ Slash command group: /vm ----------------------------------------#
+#------ Slash command groups: /terrakko ---------------------------------#
 
-vm_group = app_commands.Group(name="vm", description="VM operations")
+terrakko_group = app_commands.Group(name="terrakko", description="Terrakko operations")
+vm_group        = app_commands.Group(name="vm",       description="VM operations")
+lxc_group       = app_commands.Group(name="lxc",      description="LXC container operations (coming soon)")
 
 #------ Autocomplete ----------------------------------------------------#
 
@@ -328,9 +330,11 @@ async def vm_delete(interaction: discord.Interaction, vmid: str):
     embed.add_field(name="Status",  value=status,        inline=True)
     await interaction.response.send_message(embed=embed, view=DeleteConfirmView(node, vmid_int, name, interaction.user.id, interaction), ephemeral=True)
 
-#------ Register command group ------------------------------------------#
+#------ Register command groups -----------------------------------------#
 
-bot.tree.add_command(vm_group)
+terrakko_group.add_command(vm_group)
+terrakko_group.add_command(lxc_group)
+bot.tree.add_command(terrakko_group)
 
 #------ Start Bot -------------------------------------------------------#
 
