@@ -67,7 +67,7 @@ Cloud-init 対応の VM テンプレートが各ノードに必要です。VMID 
 ```shell
 git clone <repository_url>
 cd terrakko/app
-cp .env-temp .env
+cp .env.temp .env
 # .env を編集して各値を設定
 ```
 
