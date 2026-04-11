@@ -1,6 +1,6 @@
-discord.py==2.4.0
+discord.py==2.7.1
 passlib==1.7.4
-proxmoxer==2.1.0
-python-dotenv==1.0.1
-requests==2.32.3
-urllib3==2.2.3
+proxmoxer==2.3.0
+python-dotenv==1.2.2
+requests==2.33.1
+urllib3==2.6.3

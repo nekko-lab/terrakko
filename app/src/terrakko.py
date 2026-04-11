@@ -285,22 +285,13 @@ class BuildModal(Modal, title="VM Build Configuration"):
 
 
 @vm_group.command(name="build", description="Create a new VM from template")
-@app_commands.describe(
-    name="VM name",
-    replicas="Number of VMs to create (default: 1)",
-    sshkey="SSH public key (optional)"
-)
-async def vm_build(
-    interaction: discord.Interaction,
-    name: str,
-    replicas: int = 1,
-    sshkey: str = ""
-):
+@app_commands.describe(name="VM name", replicas="Number of VMs to create (default: 1)", sshkey="SSH public key (optional)")
+async def vm_build(interaction: discord.Interaction, name: str, replicas: int = 1, sshkey: str = ""):
     if replicas < 1 or replicas > 5:
-        await interaction.response.send_message(
-            "レプリカ数は 1〜5 の間で指定してください。", ephemeral=True
-        )
+        await interaction.response.send_message("レプリカ数は 1〜5 の間で指定してください。", ephemeral=True)
+        
         return
+    
     await interaction.response.send_modal(BuildModal(name, replicas, sshkey))
 
 #------ /vm delete ------------------------------------------------------#
@@ -327,17 +318,14 @@ class DeleteConfirmView(View):
         # Re-verify ownership before executing
         vm = await get_owned_vm(self.user_id, self.vmid_int)
         if vm is None:
-            await interaction.response.send_message(
-                "所有権の確認に失敗しました。操作を中止します。", ephemeral=True
-            )
+            await interaction.response.send_message("所有権の確認に失敗しました。操作を中止します。", ephemeral=True)
+            
             return
 
         upid = await proxmox_ve.DeleteInstance(self.node, self.vmid_int, self.user_id)
         if upid is None:
-            await interaction.response.send_message(
-                "削除に失敗しました。VM が起動中の場合は先に `/vm stop` で停止してください。",
-                ephemeral=True
-            )
+            await interaction.response.send_message("削除に失敗しました。VM が起動中の場合は先に `/vm stop` で停止してください。", ephemeral=True)
+            
             return
 
         await interaction.response.send_message(
