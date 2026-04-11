@@ -52,4 +52,7 @@ PVE_CA_CERT   = os.getenv("PVE_CA_CERT", "")
 # Discord Bot
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
+# bw-agent (Bitwarden Send for password delivery)
+BW_AGENT_URL  = os.getenv("BW_AGENT_URL", "")
+
 #------------------------------------------------------------------------#
