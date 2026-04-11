@@ -168,3 +168,7 @@ app/node_modules/
 
 # CA certificates (place on server manually, never commit)
 certs/
+
+# Local tool directories (Claude Code, Jujutsu VCS)
+.claude/
+.jj/
