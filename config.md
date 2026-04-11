@@ -33,8 +33,7 @@
 - `PVE_USER`: Proxmox VE User (Don't use root)
 - `PVE_TOKEN`: Proxmox VE Token Name
 - `PVE_SECRET`: Proxmox VE Token Secret
-- `PVE_REGION`: Proxmox VE Node Name (JSON array)
-- `PVE_TEMP_ID`: Proxmox VE VM Template ID (JSON array, 1:1 correspondence with PVE_REGION)
+- `PVE_TEMP_NAME`: VM template name to search across all nodes (e.g. `ubuntu24.04-General-template-v1.0.0`)
 - `PVE_CA_CERT`: Path to CA certificate file for SSL verification (leave empty to use system CA bundle)
 
 ### Discord Bot

@@ -9,9 +9,6 @@
 # dotenv
 from dotenv import load_dotenv
 
-# json
-import json
-
 # os
 import os
 
@@ -43,14 +40,14 @@ TIME = 900
 #------ env file --------------------------------------------------------#
 
 # Proxmox VE
-PVE_HOST    = os.getenv("PVE_HOST")
-PVE_USER    = os.getenv("PVE_USER")
-PVE_TOKEN   = os.getenv("PVE_TOKEN")
-PVE_SECRET  = os.getenv("PVE_SECRET")
-PVE_REGION  = json.loads(os.getenv("PVE_REGION"))
-PVE_TEMP_ID = json.loads(os.getenv("PVE_TEMP_ID"))
+PVE_HOST      = os.getenv("PVE_HOST")
+PVE_USER      = os.getenv("PVE_USER")
+PVE_TOKEN     = os.getenv("PVE_TOKEN")
+PVE_SECRET    = os.getenv("PVE_SECRET")
+PVE_TEMP_NAME = os.getenv("PVE_TEMP_NAME", "ubuntu24.04-General-template-v1.0.0")
+
 # SSL verification: set PVE_CA_CERT to the CA certificate path, or leave empty to use system CA bundle
-PVE_CA_CERT = os.getenv("PVE_CA_CERT", "")
+PVE_CA_CERT   = os.getenv("PVE_CA_CERT", "")
 
 # Discord Bot
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")

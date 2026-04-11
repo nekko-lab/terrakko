@@ -81,7 +81,7 @@ You can create VM templates by Ansible.
 - Run `git clone`
 - Make `.env` file
   - Proxmox VE token
-  - Region data
+  - Template name
   - CA certificate path (optional)
   - Discord bot token
 
