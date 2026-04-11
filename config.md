@@ -1,41 +1,58 @@
-# [config\.py](app/src/config.py)
+# 設定リファレンス
 
-## Version
-
-- Terrakko version
-
-## LOGO
-
-```text
-                                              _  
-  _____  _____ ____  ____  ____  _  __ _  __ |_\_  
- /__ __\/  __//  __\/  __\/  _ \/ |/ // |/ //\_  \_  
-   / \  |  \  |  \/||  \/|| /_\||   / |   /|_  \_  \  
-   | |  |  /_ |    /|    /| | |||   \ |   \| \_  \__|  
-   \_/  \____\\_/\_\\_/\_\\_/ \/\_|\_\\_|\_\\__\___/  
-  
-```
-
-## Config
-
-- `DOMAIN`: Host name of VM
-- `TIME`: Monitoring timeout in seconds (default: 900 = 15 minutes)
-
-## Environment Variables ([.env](app/.env-temp))
-
-### Docker
-
-- `WORKDIR`: Directory name
+## 環境変数（`.env`）
 
 ### Proxmox VE
 
-- `PVE_HOST`: Proxmox VE Node Host IP Address
-- `PVE_USER`: Proxmox VE User (Don't use root)
-- `PVE_TOKEN`: Proxmox VE Token Name
-- `PVE_SECRET`: Proxmox VE Token Secret
-- `PVE_TEMP_NAME`: VM template name to search across all nodes (e.g. `ubuntu24.04-General-template-v1.0.0`)
-- `PVE_CA_CERT`: Path to CA certificate file for SSL verification (leave empty to use system CA bundle)
+| 変数 | 必須 | 説明 |
+| ---- | ---- | ---- |
+| `PVE_HOST` | ✓ | Proxmox VE のホスト IP またはホスト名 |
+| `PVE_USER` | ✓ | API ユーザー（例: `terrakko-agent@pve`） |
+| `PVE_TOKEN` | ✓ | API トークン名（例: `terrakko`） |
+| `PVE_SECRET` | ✓ | API トークンのシークレット値 |
+| `PVE_TEMP_NAME` | ✓ | 使用する VM テンプレート名（例: `ubuntu24.04-General-template-v1.0.0`） |
+| `PVE_CA_CERT` | — | CA 証明書のファイルパス。空の場合はシステム CA バンドルを使用 |
+
+`PVE_USER`、`PVE_TOKEN`、`PVE_SECRET` は `pvesh create /access/users/.../token/...` で取得した値を設定します。
 
 ### Discord Bot
 
-- `DIS_TOKEN`: Discord Bot Token
+| 変数 | 必須 | 説明 |
+| ---- | ---- | ---- |
+| `DISCORD_TOKEN` | ✓ | Discord Bot Token |
+
+### Docker
+
+| 変数 | 必須 | 説明 |
+| ---- | ---- | ---- |
+| `WORKDIR` | ✓ | コンテナ内のワーキングディレクトリ名 |
+| `DOMAIN` | — | VM のホスト名サフィックス（例: `.nekko.cloud`） |
+
+---
+
+## アプリケーション設定（`config.py`）
+
+| 定数 | デフォルト | 説明 |
+| ---- | ---------- | ---- |
+| `TIME` | `900` | PVE タスク監視のタイムアウト秒数（15 分） |
+
+---
+
+## `.env` ファイルのテンプレート
+
+```dotenv
+# Proxmox VE
+PVE_HOST=192.168.1.10
+PVE_USER=terrakko-agent@pve
+PVE_TOKEN=terrakko
+PVE_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+PVE_TEMP_NAME=ubuntu24.04-General-template-v1.0.0
+PVE_CA_CERT=
+
+# Discord
+DISCORD_TOKEN=your_discord_bot_token
+
+# Docker
+WORKDIR=src
+DOMAIN=.example.com
+```
