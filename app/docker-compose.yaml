@@ -8,6 +8,7 @@ services:
       args:
           lang: 'C'
           dir: "${WORKDIR}"
+    user: "1000:1000"
     working_dir: /home/${WORKDIR}
     volumes:
       - ./${WORKDIR}:/home/${WORKDIR}
