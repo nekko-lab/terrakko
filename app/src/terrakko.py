@@ -53,6 +53,9 @@ intents.messages = True
 
 bot = commands.Bot(command_prefix="trk", case_insensitive=True, intents=intents, activity=discord.Game("Nekko Cloud"))
 
+# Active DM sessions: user IDs who have run /terrakko console
+active_sessions: set[int] = set()
+
 #------ Bot events ------------------------------------------------------#
 
 @bot.event
@@ -97,7 +100,7 @@ async def get_owned_vm(user_id, vmid):
 def generate_password(length: int = 10) -> str:
     """Generate a random alphanumeric password using secrets."""
     alphabet = string.ascii_letters + string.digits
-    
+
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
@@ -106,12 +109,17 @@ async def request_bw_send(password: str) -> str | None:
     if not config.BW_AGENT_URL:
         return None
     try:
-        resp = await asyncio.to_thread(requests.post, f"{config.BW_AGENT_URL}/send", json={"text": password}, timeout=10)
+        resp = await asyncio.to_thread(
+            requests.post,
+            f"{config.BW_AGENT_URL}/send",
+            json={"text": password},
+            timeout=10
+        )
         if resp.status_code == 200:
             return resp.json().get("url")
     except Exception as e:
         print(f"bw-agent request failed: {e}")
-    
+
     return None
 
 
@@ -120,8 +128,9 @@ async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, p
     ok, status = await proxmox_ve.WatchTask(upid)
     if not ok:
         exitstatus = status.get('exitstatus', 'UNKNOWN')
-        await send_dm_or_fallback(user, interaction, f"VM `{vm_name}` (VMID:{vmid_int}) のビルドに失敗しました。(exitstatus: {exitstatus})")
-        
+        await send_dm_or_fallback(user, interaction,
+            f"VM `{vm_name}` (VMID:{vmid_int}) のビルドに失敗しました。(exitstatus: {exitstatus})")
+
         return
 
     send_url = await request_bw_send(password)
@@ -129,44 +138,110 @@ async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, p
         message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\n初期パスワード: {send_url}\n（このリンクは15分で失効します）")
     else:
         message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\nパスワードの共有に失敗しました。PVE WebコンソールのCloud-initから変更してください。")
-    
+
     await send_dm_or_fallback(user, interaction, message)
+
+
+async def check_session(interaction: discord.Interaction) -> bool:
+    """Return True if the user has an active DM session, otherwise reply and return False."""
+    if interaction.user.id not in active_sessions:
+        await interaction.response.send_message("先に `/terrakko console` を実行して DM セッションを開始してください。", ephemeral=True)
+        
+        return False
+    
+    return True
 
 #------ Slash command groups: /terrakko ---------------------------------#
 
 terrakko_group = app_commands.Group(name="terrakko", description="Terrakko operations")
-vm_group        = app_commands.Group(name="vm",       description="VM operations")
-lxc_group       = app_commands.Group(name="lxc",      description="LXC container operations (coming soon)")
+vm_group       = app_commands.Group(name="vm",       description="VM operations")
+lxc_group      = app_commands.Group(name="lxc",      description="LXC container operations (coming soon)")
+
+#------ /terrakko help --------------------------------------------------#
+
+def _build_help_embed() -> discord.Embed:
+    embed = discord.Embed(title="Terrakko — コマンド一覧", description="まず `/terrakko console` を実行して DM セッションを開始してください。", color=discord.Color.blurple())
+    embed.add_field(name="/terrakko console", value="DM セッションを開始する。VM 操作コマンドの使用前に必須。", inline=False)
+    embed.add_field(name="/terrakko vm build", value="テンプレートから VM を作成する（CPU・メモリ・ディスク・ユーザー名を入力）。", inline=False)
+    embed.add_field(name="/terrakko vm start", value="停止中の VM を起動する。", inline=False)
+    embed.add_field(name="/terrakko vm stop", value="起動中の VM をシャットダウンする。", inline=False)
+    embed.add_field(name="/terrakko vm status", value="VM のステータス・IP アドレスを確認する。", inline=False)
+    embed.add_field(name="/terrakko vm delete", value="VM を削除する（二重確認あり）。起動中は削除不可。", inline=False)
+    embed.set_footer(text="すべての操作完了通知は DM で届きます。")
+    
+    return embed
+
+
+@terrakko_group.command(name="help", description="Show available commands")
+async def terrakko_help(interaction: discord.Interaction):
+    await interaction.response.send_message(embed=_build_help_embed(), ephemeral=True)
+
+#------ /terrakko console -----------------------------------------------#
+
+_CONSOLE_WELCOME = (
+    "**Terrakko Console**\n"
+    "DM セッションを開始しました。以降の操作はこの DM 上で行えます。\n\n"
+    "**VM 操作コマンド**\n"
+    "`/terrakko vm build`  — テンプレートから VM を作成\n"
+    "`/terrakko vm start`  — 停止中の VM を起動\n"
+    "`/terrakko vm stop`   — 起動中の VM をシャットダウン\n"
+    "`/terrakko vm status` — VM のステータス・IP を確認\n"
+    "`/terrakko vm delete` — VM を削除（二重確認あり）\n\n"
+    "コマンド一覧は `/terrakko help` で確認できます。"
+)
+
+@terrakko_group.command(name="console", description="Start a DM session with Terrakko")
+async def terrakko_console(interaction: discord.Interaction):
+    try:
+        await interaction.user.send(_CONSOLE_WELCOME)
+        active_sessions.add(interaction.user.id)
+
+        await interaction.response.send_message("DM を開きました。", ephemeral=True)
+        print(f"Console session started: {interaction.user.id}")
+    except discord.Forbidden:
+        await interaction.response.send_message("DM を送信できませんでした。このサーバーのメンバーからの DM を許可してください。", ephemeral=True)
 
 #------ Autocomplete ----------------------------------------------------#
 
 async def autocomplete_stopped_vms(interaction: discord.Interaction, current: str):
-    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+    if interaction.user.id not in active_sessions:
+        return []
     
+    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+
     return [app_commands.Choice(name=f"{vm[2]} (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if vm[3] == 'stopped' and current.lower() in vm[2].lower()][:25]
 
 
 async def autocomplete_running_vms(interaction: discord.Interaction, current: str):
-    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+    if interaction.user.id not in active_sessions:
+        return []
     
+    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+
     return [app_commands.Choice(name=f"{vm[2]} (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if vm[3] == 'running' and current.lower() in vm[2].lower()][:25]
 
 
 async def autocomplete_all_vms(interaction: discord.Interaction, current: str):
-    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+    if interaction.user.id not in active_sessions:
+        return []
     
+    vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
+
     return [app_commands.Choice(name=f"{vm[2]} [{vm[3]}] (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if current.lower() in vm[2].lower()][:25]
 
-#------ /vm status ------------------------------------------------------#
+#------ /terrakko vm status ---------------------------------------------#
 
 @vm_group.command(name="status", description="Show VM status")
 @app_commands.describe(vmid="Target VM")
 @app_commands.autocomplete(vmid=autocomplete_all_vms)
 async def vm_status(interaction: discord.Interaction, vmid: str):
+    if not await check_session(interaction):
+        return
+
     vm = await get_owned_vm(interaction.user.id, vmid)
     if vm is None:
         await interaction.response.send_message("指定された VM は見つかりません（または操作権限がありません）。", ephemeral=True)
-        
+
         return
 
     node, vmid_int, name, status = vm
@@ -183,50 +258,57 @@ async def vm_status(interaction: discord.Interaction, vmid: str):
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-#------ /vm start -------------------------------------------------------#
+#------ /terrakko vm start ----------------------------------------------#
 
 @vm_group.command(name="start", description="Start a stopped VM")
 @app_commands.describe(vmid="Target VM (stopped only)")
 @app_commands.autocomplete(vmid=autocomplete_stopped_vms)
 async def vm_start(interaction: discord.Interaction, vmid: str):
+    if not await check_session(interaction):
+        return
+
     vm = await get_owned_vm(interaction.user.id, vmid)
     if vm is None:
         await interaction.response.send_message("指定された VM は見つかりません（または操作権限がありません）。", ephemeral=True)
-        
+
         return
 
     node, vmid_int, name, _ = vm
     upid = await proxmox_ve.StartInstance(node, vmid_int)
     if upid is None:
         await interaction.response.send_message(f"VM {vmid_int} はすでに起動中です。", ephemeral=True)
-        
+
         return
 
     await interaction.response.send_message(f"VM `{name}` (VMID:{vmid_int}) の起動を開始しました。完了したら DM でお知らせします。", ephemeral=True)
-    asyncio.create_task(monitor_and_notify(upid, interaction.user, interaction,f"VM `{name}` (VMID:{vmid_int}) が起動しました。", f"VM `{name}` (VMID:{vmid_int}) の起動に失敗しました。"))
+    asyncio.create_task(monitor_and_notify(upid, interaction.user, interaction, f"VM `{name}` (VMID:{vmid_int}) が起動しました。", f"VM `{name}` (VMID:{vmid_int}) の起動に失敗しました。"))
 
-#------ /vm stop --------------------------------------------------------#
+#------ /terrakko vm stop -----------------------------------------------#
 
 @vm_group.command(name="stop", description="Shutdown a running VM")
 @app_commands.describe(vmid="Target VM (running only)")
 @app_commands.autocomplete(vmid=autocomplete_running_vms)
 async def vm_stop(interaction: discord.Interaction, vmid: str):
+    if not await check_session(interaction):
+        return
+
     vm = await get_owned_vm(interaction.user.id, vmid)
     if vm is None:
         await interaction.response.send_message("指定された VM は見つかりません（または操作権限がありません）。", ephemeral=True)
+
         return
 
     node, vmid_int, name, _ = vm
     upid = await proxmox_ve.ShutdownInstance(node, vmid_int)
     if upid is None:
         await interaction.response.send_message(f"VM {vmid_int} はすでに停止中です。", ephemeral=True)
-        
+
         return
 
-    await interaction.response.send_message(f"VM `{name}` (VMID:{vmid_int}) の停止を開始しました。完了したら DM でお知らせします。",ephemeral=True)
+    await interaction.response.send_message(f"VM `{name}` (VMID:{vmid_int}) の停止を開始しました。完了したら DM でお知らせします。", ephemeral=True)
     asyncio.create_task(monitor_and_notify(upid, interaction.user, interaction, f"VM `{name}` (VMID:{vmid_int}) が停止しました。", f"VM `{name}` (VMID:{vmid_int}) の停止に失敗しました。"))
 
-#------ /vm build -------------------------------------------------------#
+#------ /terrakko vm build ----------------------------------------------#
 
 class BuildModal(Modal, title="VM Build Configuration"):
     cpu    = TextInput(label="CPU Cores",   placeholder="2",      required=True)
@@ -260,21 +342,24 @@ class BuildModal(Modal, title="VM Build Configuration"):
 
     async def on_error(self, interaction: discord.Interaction, error: Exception):
         print(f"BuildModal error: {error}")
-        
+
         await interaction.response.send_message("ビルド処理中にエラーが発生しました。", ephemeral=True)
 
 
 @vm_group.command(name="build", description="Create a new VM from template")
 @app_commands.describe(name="VM name", replicas="Number of VMs to create (default: 1)", sshkey="SSH public key (optional)")
 async def vm_build(interaction: discord.Interaction, name: str, replicas: int = 1, sshkey: str = ""):
+    if not await check_session(interaction):
+        return
+
     if replicas < 1 or replicas > 5:
         await interaction.response.send_message("レプリカ数は 1〜5 の間で指定してください。", ephemeral=True)
-        
+
         return
-    
+
     await interaction.response.send_modal(BuildModal(name, replicas, sshkey))
 
-#------ /vm delete ------------------------------------------------------#
+#------ /terrakko vm delete ---------------------------------------------#
 
 class DeleteConfirmView(View):
 
@@ -292,13 +377,13 @@ class DeleteConfirmView(View):
         vm = await get_owned_vm(self.user_id, self.vmid_int)
         if vm is None:
             await interaction.response.send_message("所有権の確認に失敗しました。操作を中止します。", ephemeral=True)
-            
+
             return
 
         upid = await proxmox_ve.DeleteInstance(self.node, self.vmid_int, self.user_id)
         if upid is None:
-            await interaction.response.send_message("削除に失敗しました。VM が起動中の場合は先に `/vm stop` で停止してください。", ephemeral=True)
-            
+            await interaction.response.send_message("削除に失敗しました。VM が起動中の場合は先に `/terrakko vm stop` で停止してください。", ephemeral=True)
+
             return
 
         await interaction.response.send_message(f"VM `{self.vm_name}` (VMID:{self.vmid_int}) の削除を開始しました。完了したら DM でお知らせします。", ephemeral=True)
@@ -316,10 +401,13 @@ class DeleteConfirmView(View):
 @app_commands.describe(vmid="Target VM")
 @app_commands.autocomplete(vmid=autocomplete_all_vms)
 async def vm_delete(interaction: discord.Interaction, vmid: str):
+    if not await check_session(interaction):
+        return
+
     vm = await get_owned_vm(interaction.user.id, vmid)
     if vm is None:
         await interaction.response.send_message("指定された VM は見つかりません（または操作権限がありません）。", ephemeral=True)
-        
+
         return
 
     node, vmid_int, name, status = vm
