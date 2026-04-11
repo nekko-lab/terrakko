@@ -209,11 +209,11 @@ async def RebootInstance(r, vmid):
 # Clone a template and initialize with Cloud-init                       #
 #------------------------------------------------------------------------#
 
-async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_user_id):
+async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_user_id, cpu: int, memory: int, disk: int):
 
     if int(clone_vm_id) > 90000 or int(clone_vm_id) < 100:
         print("Invalid VM ID")
-        
+
         return None
 
     try:
@@ -232,7 +232,7 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
 
         # Assign ownership tag immediately after clone
         await asyncio.to_thread(current_node.qemu(clone_vm_id).config.set, tags=f"discord_{discord_user_id}")
-        upid = await InitializeInstance(clone_vm_id, ciuser, passwd, sshkey, current_node)
+        upid = await InitializeInstance(clone_vm_id, ciuser, passwd, sshkey, current_node, cpu, memory, disk)
         AuditLog(discord_user_id, "build", clone_vm_id, "started")
         
         return upid
@@ -247,11 +247,23 @@ async def CreateInstance(clone_vm_id, vm_name, ciuser, passwd, sshkey, discord_u
 # Apply Cloud-init config and start the VM                              #
 #------------------------------------------------------------------------#
 
-async def InitializeInstance(vmid, ciuser, passwd, sshkey, current_node):
+async def InitializeInstance(vmid, ciuser, passwd, sshkey, current_node, cpu: int, memory: int, disk: int):
 
     try:
         print(f"Initializing VM ID: {vmid}...")
-        await asyncio.to_thread(current_node.qemu(vmid).config.set, ciuser=ciuser, cipassword=passwd, sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe=''))
+        await asyncio.to_thread(
+            current_node.qemu(vmid).config.set,
+            cores=cpu,
+            memory=memory,
+            ciuser=ciuser,
+            cipassword=passwd,
+            sshkeys=urllib.parse.quote(sshkey.encode('utf-8'), safe='')
+        )
+        await asyncio.to_thread(
+            current_node.qemu(vmid).resize.put,
+            disk='scsi0',
+            size=f"{disk}G"
+        )
 
         upid = await asyncio.to_thread(current_node.qemu(vmid).status.start.post)
         print(f"Initialized VM ID: {vmid}")

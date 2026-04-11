@@ -23,7 +23,7 @@ from discord.ext import commands
 from discord import app_commands
 
 # discord UI
-from discord.ui import TextInput, Modal, View
+from discord.ui import View
 
 # asyncio
 import asyncio
@@ -309,51 +309,52 @@ async def vm_stop(interaction: discord.Interaction, vmid: str):
 
 #------ /terrakko vm build ----------------------------------------------#
 
-class BuildModal(Modal, title="VM Build Configuration"):
-    ciuser = TextInput(label="Username",    placeholder="ubuntu", required=True)
-
-    def __init__(self, vm_name: str, replicas: int, sshkey: str):
-        super().__init__()
-        self.vm_name  = vm_name
-        self.replicas = replicas
-        self.sshkey   = sshkey
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"VM `{self.vm_name}` のビルドを開始しました。完了したら DM でお知らせします。", ephemeral=True)
-
-        for i in range(self.replicas):
-            name     = f"{self.vm_name}-{i+1}" if self.replicas > 1 else self.vm_name
-            password = generate_password()
-            vmid     = await proxmox_ve.GetVMID()
-            if vmid is None:
-                await send_dm_or_fallback(interaction.user, interaction, f"VM `{name}` の VMID 取得に失敗しました。")
-
-                continue
-
-            upid = await proxmox_ve.CreateInstance(vmid, name, self.ciuser.value, password, str(self.sshkey), interaction.user.id)
-            if upid:
-                asyncio.create_task(monitor_and_notify_build(upid, interaction.user, interaction, name, int(vmid), password))
-            else:
-                await send_dm_or_fallback(interaction.user, interaction, f"VM `{name}` のビルド開始に失敗しました。")
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception):
-        print(f"BuildModal error: {error}")
-
-        await interaction.response.send_message("ビルド処理中にエラーが発生しました。", ephemeral=True)
-
-
 @vm_group.command(name="build", description="Create a new VM from template")
-@app_commands.describe(name="VM name", replicas="Number of VMs to create (default: 1)", sshkey="SSH public key (optional)")
-async def vm_build(interaction: discord.Interaction, name: str, replicas: int = 1, sshkey: str = ""):
+@app_commands.describe(
+    name="VM name",
+    ciuser="Cloud-init username",
+    cpu="CPU cores (default: 2)",
+    memory="Memory in MB (default: 2048)",
+    disk="Disk size in GB (default: 20)",
+    replicas="Number of VMs to create (default: 1, max: 5)",
+    sshkey="SSH public key (optional)",
+)
+async def vm_build(
+    interaction: discord.Interaction,
+    name: str,
+    ciuser: str,
+    cpu: int = 2,
+    memory: int = 2048,
+    disk: int = 20,
+    replicas: int = 1,
+    sshkey: str = "",
+):
     if not await check_session(interaction):
         return
 
     if replicas < 1 or replicas > 5:
         await interaction.response.send_message("レプリカ数は 1〜5 の間で指定してください。", ephemeral=True)
-
         return
 
-    await interaction.response.send_modal(BuildModal(name, replicas, sshkey))
+    if cpu < 1 or memory < 512 or disk < 1:
+        await interaction.response.send_message("CPU は 1 以上、メモリは 512 MB 以上、ディスクは 1 GB 以上で指定してください。", ephemeral=True)
+        return
+
+    await interaction.response.send_message(f"VM `{name}` のビルドを開始しました。完了したら DM でお知らせします。", ephemeral=True)
+
+    for i in range(replicas):
+        vm_name  = f"{name}-{i+1}" if replicas > 1 else name
+        password = generate_password()
+        vmid     = await proxmox_ve.GetVMID()
+        if vmid is None:
+            await send_dm_or_fallback(interaction.user, interaction, f"VM `{vm_name}` の VMID 取得に失敗しました。")
+            continue
+
+        upid = await proxmox_ve.CreateInstance(vmid, vm_name, ciuser, password, sshkey, interaction.user.id, cpu, memory, disk)
+        if upid:
+            asyncio.create_task(monitor_and_notify_build(upid, interaction.user, interaction, vm_name, int(vmid), password))
+        else:
+            await send_dm_or_fallback(interaction.user, interaction, f"VM `{vm_name}` のビルド開始に失敗しました。")
 
 #------ /terrakko vm delete ---------------------------------------------#
 
@@ -391,12 +392,18 @@ class DeleteConfirmView(View):
         await interaction.response.send_message("削除をキャンセルしました。", ephemeral=True)
 
     async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        try:
+            await self.original_interaction.edit_original_response(view=self)
+        except Exception:
+            pass
         print(f"DeleteConfirmView timed out for VM {self.vmid_int}")
 
 
 @vm_group.command(name="delete", description="Delete a VM (requires confirmation)")
-@app_commands.describe(vmid="Target VM")
-@app_commands.autocomplete(vmid=autocomplete_all_vms)
+@app_commands.describe(vmid="Target VM (stopped only)")
+@app_commands.autocomplete(vmid=autocomplete_stopped_vms)
 async def vm_delete(interaction: discord.Interaction, vmid: str):
     if not await check_session(interaction):
         return
