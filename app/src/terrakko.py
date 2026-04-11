@@ -28,6 +28,9 @@ from discord.ui import View
 # asyncio
 import asyncio
 
+# logging
+import logging
+
 # secrets
 import secrets
 
@@ -44,6 +47,15 @@ import config
 
 # proxmox_ve.py
 import proxmox_ve
+
+#------ Logging setup ---------------------------------------------------#
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 #------ Initialize Bot --------------------------------------------------#
 
@@ -62,18 +74,31 @@ async def on_ready():
         guild = discord.Object(id=config.DISCORD_GUILD_ID)
         bot.tree.copy_global_to(guild=guild)
         await bot.tree.sync(guild=guild)
-        print(f"Commands synced to guild {config.DISCORD_GUILD_ID} (immediate)")
+        logger.info("Commands synced to guild %s (immediate)", config.DISCORD_GUILD_ID)
     else:
         await bot.tree.sync()
-        print("Commands synced globally (up to 1 hour to propagate)")
-    print(config.LOGO)
-    print(f"Terrakko v{config.version} ready")
-    print(f"Logged in as {bot.user}")
+        logger.info("Commands synced globally (up to 1 hour to propagate)")
+    logger.info(config.LOGO)
+    logger.info("Terrakko v%s ready — logged in as %s", config.version, bot.user)
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
     cmd = interaction.data.get("name", "unknown") if interaction.data else "unknown"
-    print(f"{interaction.user.id} triggered /{cmd}")
+    logger.debug("user %s triggered /%s", interaction.user.id, cmd)
+
+#------ Global app command error handler --------------------------------#
+
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(
+            f"コマンドはクールダウン中です。**{error.retry_after:.0f} 秒**後に再試行してください。",
+            ephemeral=True,
+        )
+    else:
+        logger.error("Unhandled app command error: %s", error)
+        if not interaction.response.is_done():
+            await interaction.response.send_message("予期しないエラーが発生しました。", ephemeral=True)
 
 #------ Helpers ---------------------------------------------------------#
 
@@ -85,7 +110,7 @@ async def send_dm_or_fallback(user, interaction, content):
         try:
             await interaction.followup.send(content, ephemeral=True)
         except Exception:
-            print(f"Failed to notify user {user.id}: {content}")
+            logger.warning("Failed to notify user %s", user.id)
 
 
 async def monitor_and_notify(upid, user, interaction, success_msg, fail_msg):
@@ -124,7 +149,7 @@ async def request_bw_send(password: str) -> str | None:
         if resp.status_code == 200:
             return resp.json().get("url")
     except Exception as e:
-        print(f"bw-agent request failed: {e}")
+        logger.warning("bw-agent request failed: %s", e)
 
     return None
 
@@ -152,9 +177,9 @@ async def check_session(interaction: discord.Interaction) -> bool:
     """Return True if the user has an active DM session, otherwise reply and return False."""
     if interaction.user.id not in active_sessions:
         await interaction.response.send_message("先に `/terrakko console` を実行して DM セッションを開始してください。", ephemeral=True)
-        
+
         return False
-    
+
     return True
 
 #------ Slash command groups: /terrakko ---------------------------------#
@@ -168,13 +193,13 @@ lxc_group      = app_commands.Group(name="lxc",      description="LXC container 
 def _build_help_embed() -> discord.Embed:
     embed = discord.Embed(title="Terrakko — コマンド一覧", description="まず `/terrakko console` を実行して DM セッションを開始してください。", color=discord.Color.blurple())
     embed.add_field(name="/terrakko console", value="DM セッションを開始する。VM 操作コマンドの使用前に必須。", inline=False)
-    embed.add_field(name="/terrakko vm build", value="テンプレートから VM を作成する（CPU・メモリ・ディスク・ユーザー名を入力）。", inline=False)
+    embed.add_field(name="/terrakko vm build", value=f"テンプレートから VM を作成する（CPU 最大 {config.VM_MAX_CPU} コア / メモリ最大 {config.VM_MAX_MEMORY} MB / ディスク最大 {config.VM_MAX_DISK} GB）。", inline=False)
     embed.add_field(name="/terrakko vm start", value="停止中の VM を起動する。", inline=False)
     embed.add_field(name="/terrakko vm stop", value="起動中の VM をシャットダウンする。", inline=False)
     embed.add_field(name="/terrakko vm status", value="VM のステータス・IP アドレスを確認する。", inline=False)
     embed.add_field(name="/terrakko vm delete", value="VM を削除する（二重確認あり）。起動中は削除不可。", inline=False)
     embed.set_footer(text="すべての操作完了通知は DM で届きます。")
-    
+
     return embed
 
 
@@ -203,7 +228,7 @@ async def terrakko_console(interaction: discord.Interaction):
         active_sessions.add(interaction.user.id)
 
         await interaction.response.send_message("DM を開きました。", ephemeral=True)
-        print(f"Console session started: {interaction.user.id}")
+        logger.info("Console session started: %s", interaction.user.id)
     except discord.Forbidden:
         await interaction.response.send_message("DM を送信できませんでした。このサーバーのメンバーからの DM を許可してください。", ephemeral=True)
 
@@ -212,7 +237,7 @@ async def terrakko_console(interaction: discord.Interaction):
 async def autocomplete_stopped_vms(interaction: discord.Interaction, current: str):
     if interaction.user.id not in active_sessions:
         return []
-    
+
     vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
 
     return [app_commands.Choice(name=f"{vm[2]} (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if vm[3] == 'stopped' and current.lower() in vm[2].lower()][:25]
@@ -221,7 +246,7 @@ async def autocomplete_stopped_vms(interaction: discord.Interaction, current: st
 async def autocomplete_running_vms(interaction: discord.Interaction, current: str):
     if interaction.user.id not in active_sessions:
         return []
-    
+
     vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
 
     return [app_commands.Choice(name=f"{vm[2]} (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if vm[3] == 'running' and current.lower() in vm[2].lower()][:25]
@@ -230,7 +255,7 @@ async def autocomplete_running_vms(interaction: discord.Interaction, current: st
 async def autocomplete_all_vms(interaction: discord.Interaction, current: str):
     if interaction.user.id not in active_sessions:
         return []
-    
+
     vms = await proxmox_ve.GetNodeVM(interaction.user.id) or []
 
     return [app_commands.Choice(name=f"{vm[2]} [{vm[3]}] (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if current.lower() in vm[2].lower()][:25]
@@ -240,6 +265,7 @@ async def autocomplete_all_vms(interaction: discord.Interaction, current: str):
 @vm_group.command(name="status", description="Show VM status")
 @app_commands.describe(vmid="Target VM")
 @app_commands.autocomplete(vmid=autocomplete_all_vms)
+@app_commands.checks.cooldown(rate=10, per=30.0, key=lambda i: i.user.id)
 async def vm_status(interaction: discord.Interaction, vmid: str):
     if not await check_session(interaction):
         return
@@ -270,6 +296,7 @@ async def vm_status(interaction: discord.Interaction, vmid: str):
 @vm_group.command(name="start", description="Start a stopped VM")
 @app_commands.describe(vmid="Target VM (stopped only)")
 @app_commands.autocomplete(vmid=autocomplete_stopped_vms)
+@app_commands.checks.cooldown(rate=5, per=60.0, key=lambda i: i.user.id)
 async def vm_start(interaction: discord.Interaction, vmid: str):
     if not await check_session(interaction):
         return
@@ -295,6 +322,7 @@ async def vm_start(interaction: discord.Interaction, vmid: str):
 @vm_group.command(name="stop", description="Shutdown a running VM")
 @app_commands.describe(vmid="Target VM (running only)")
 @app_commands.autocomplete(vmid=autocomplete_running_vms)
+@app_commands.checks.cooldown(rate=5, per=60.0, key=lambda i: i.user.id)
 async def vm_stop(interaction: discord.Interaction, vmid: str):
     if not await check_session(interaction):
         return
@@ -321,12 +349,13 @@ async def vm_stop(interaction: discord.Interaction, vmid: str):
 @app_commands.describe(
     name="VM name",
     ciuser="Cloud-init username",
-    cpu="CPU cores (default: 2)",
-    memory="Memory in MB (default: 2048)",
-    disk="Disk size in GB (default: 20)",
-    replicas="Number of VMs to create (default: 1, max: 5)",
+    cpu=f"CPU cores (default: 2, max: {config.VM_MAX_CPU})",
+    memory=f"Memory in MB (default: 2048, max: {config.VM_MAX_MEMORY})",
+    disk=f"Disk size in GB (default: 20, max: {config.VM_MAX_DISK})",
+    replicas=f"Number of VMs to create (default: 1, max: {config.VM_MAX_REPLICAS})",
     sshkey="SSH public key (optional)",
 )
+@app_commands.checks.cooldown(rate=2, per=300.0, key=lambda i: i.user.id)
 async def vm_build(
     interaction: discord.Interaction,
     name: str,
@@ -340,12 +369,20 @@ async def vm_build(
     if not await check_session(interaction):
         return
 
-    if replicas < 1 or replicas > 5:
-        await interaction.response.send_message("レプリカ数は 1〜5 の間で指定してください。", ephemeral=True)
+    if not (1 <= replicas <= config.VM_MAX_REPLICAS):
+        await interaction.response.send_message(f"レプリカ数は 1〜{config.VM_MAX_REPLICAS} の間で指定してください。", ephemeral=True)
         return
 
-    if cpu < 1 or memory < 512 or disk < 1:
-        await interaction.response.send_message("CPU は 1 以上、メモリは 512 MB 以上、ディスクは 1 GB 以上で指定してください。", ephemeral=True)
+    if cpu < 1 or cpu > config.VM_MAX_CPU:
+        await interaction.response.send_message(f"CPU は 1〜{config.VM_MAX_CPU} コアの範囲で指定してください。", ephemeral=True)
+        return
+
+    if memory < 512 or memory > config.VM_MAX_MEMORY:
+        await interaction.response.send_message(f"メモリは 512〜{config.VM_MAX_MEMORY} MB の範囲で指定してください。", ephemeral=True)
+        return
+
+    if disk < 1 or disk > config.VM_MAX_DISK:
+        await interaction.response.send_message(f"ディスクは 1〜{config.VM_MAX_DISK} GB の範囲で指定してください。", ephemeral=True)
         return
 
     await interaction.response.send_message(f"VM `{name}` のビルドを開始しました。完了したら DM でお知らせします。", ephemeral=True)
@@ -406,12 +443,13 @@ class DeleteConfirmView(View):
             await self.original_interaction.edit_original_response(view=self)
         except Exception:
             pass
-        print(f"DeleteConfirmView timed out for VM {self.vmid_int}")
+        logger.debug("DeleteConfirmView timed out for VM %s", self.vmid_int)
 
 
 @vm_group.command(name="delete", description="Delete a VM (requires confirmation)")
 @app_commands.describe(vmid="Target VM (stopped only)")
 @app_commands.autocomplete(vmid=autocomplete_stopped_vms)
+@app_commands.checks.cooldown(rate=3, per=60.0, key=lambda i: i.user.id)
 async def vm_delete(interaction: discord.Interaction, vmid: str):
     if not await check_session(interaction):
         return

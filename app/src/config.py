@@ -57,4 +57,10 @@ DISCORD_GUILD_ID = int(os.getenv("DISCORD_GUILD_ID", "0"))
 # bw-agent (Bitwarden Send for password delivery)
 BW_AGENT_URL  = os.getenv("BW_AGENT_URL", "")
 
+# VM resource limits (upper bounds enforced at command level)
+VM_MAX_CPU      = int(os.getenv("VM_MAX_CPU",      "16"))
+VM_MAX_MEMORY   = int(os.getenv("VM_MAX_MEMORY",   "32768"))
+VM_MAX_DISK     = int(os.getenv("VM_MAX_DISK",     "500"))
+VM_MAX_REPLICAS = int(os.getenv("VM_MAX_REPLICAS", "5"))
+
 #------------------------------------------------------------------------#
