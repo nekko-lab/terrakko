@@ -12,6 +12,7 @@ services:
     working_dir: /home/${WORKDIR}
     volumes:
       - ./${WORKDIR}:/home/${WORKDIR}
+      - ./certs:/certs:ro
     networks:
       - default
     environment:
