@@ -10,6 +10,11 @@ services:
           dir: "${WORKDIR}"
     user: "1000:1000"
     working_dir: /home/${WORKDIR}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    extra_hosts:
+      - "mk.proxmoxve.internal.nekko-lab.dev:10.0.0.101"
     volumes:
       - ./${WORKDIR}:/home/${WORKDIR}
       - ./certs:/certs:ro
