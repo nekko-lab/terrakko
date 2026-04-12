@@ -7,14 +7,13 @@ on:
 
 jobs:
   release:
-    name: Create release
+    name: Release and publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
       pull-requests: read
       models: read
-    outputs:
-      new_tag: ${{ steps.version.outputs.new_tag }}
 
     steps:
       - uses: actions/checkout@v4
@@ -177,20 +176,6 @@ jobs:
             gh release create "$TAG" --title "$TAG" --generate-notes
           fi
 
-  publish:
-    name: Build and push Docker image to GHCR
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release.outputs.new_tag }}
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -204,8 +189,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release.outputs.new_tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.new_tag }}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.new_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.new_tag }}
             type=raw,value=latest
 
       - name: Build and push Docker image
