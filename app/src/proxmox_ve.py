@@ -340,7 +340,11 @@ async def GetNodeVM(author_id):
 
         results = []
         for pve_node in nodes:
-            vms = await asyncio.to_thread(pve.nodes(pve_node['node']).qemu.get)
+            try:
+                vms = await asyncio.to_thread(pve.nodes(pve_node['node']).qemu.get)
+            except Exception as e:
+                logger.warning("GetNodeVM: skipping node %s due to error: %s", pve_node['node'], e)
+                continue
             for vm in vms:
                 if not (100 <= int(vm['vmid']) < 90000):
                     continue

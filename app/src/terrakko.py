@@ -260,6 +260,33 @@ async def autocomplete_all_vms(interaction: discord.Interaction, current: str):
 
     return [app_commands.Choice(name=f"{vm[2]} [{vm[3]}] (VMID:{vm[1]})", value=str(vm[1])) for vm in vms if current.lower() in vm[2].lower()][:25]
 
+#------ /terrakko vm list -----------------------------------------------#
+
+@vm_group.command(name="list", description="List all your VMs")
+@app_commands.checks.cooldown(rate=5, per=30.0, key=lambda i: i.user.id)
+async def vm_list(interaction: discord.Interaction):
+    if not await check_session(interaction):
+        return
+
+    await interaction.response.defer(ephemeral=True)
+
+    vms = await proxmox_ve.GetNodeVM(interaction.user.id)
+    if not vms:
+        await interaction.followup.send("所有している VM はありません。", ephemeral=True)
+        return
+
+    domain = config.DOMAIN or ""
+    embed = discord.Embed(title="Your VMs", color=discord.Color.blurple())
+    for node, vmid_int, name, status in vms:
+        status_icon = "🟢" if status == "running" else "🔴"
+        embed.add_field(
+            name=f"{status_icon} {name}",
+            value=f"VMID: `{vmid_int}` | Region: `{node}` | Domain: `vm{vmid_int}{domain}`",
+            inline=False,
+        )
+
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
 #------ /terrakko vm status ---------------------------------------------#
 
 @vm_group.command(name="status", description="Show VM status")
