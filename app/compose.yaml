@@ -13,6 +13,8 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    extra_hosts:
+      - "${PVE_EXTRA_HOST:-placeholder:127.0.0.1}"
     volumes:
       - ./${WORKDIR}:/home/${WORKDIR}
       - ./certs:/certs:ro
