@@ -194,6 +194,7 @@ def _build_help_embed() -> discord.Embed:
     embed = discord.Embed(title="Terrakko — コマンド一覧", description="まず `/terrakko console` を実行して DM セッションを開始してください。", color=discord.Color.blurple())
     embed.add_field(name="/terrakko console", value="DM セッションを開始する。VM 操作コマンドの使用前に必須。", inline=False)
     embed.add_field(name="/terrakko vm build", value=f"テンプレートから VM を作成する（CPU 最大 {config.VM_MAX_CPU} コア / メモリ最大 {config.VM_MAX_MEMORY} MB / ディスク最大 {config.VM_MAX_DISK} GB）。", inline=False)
+    embed.add_field(name="/terrakko vm list", value="所有する VM の VMID・名前・ドメイン・ステータスの一覧を表示する。", inline=False)
     embed.add_field(name="/terrakko vm start", value="停止中の VM を起動する。", inline=False)
     embed.add_field(name="/terrakko vm stop", value="起動中の VM をシャットダウンする。", inline=False)
     embed.add_field(name="/terrakko vm status", value="VM のステータス・IP アドレスを確認する。", inline=False)
@@ -213,6 +214,7 @@ _CONSOLE_WELCOME = (
     "**Terrakko Console**\n"
     "DM セッションを開始しました。以降の操作はこの DM 上で行えます。\n\n"
     "**VM 操作コマンド**\n"
+    "`/terrakko vm list`   — 所有する VM の一覧を表示\n"
     "`/terrakko vm build`  — テンプレートから VM を作成\n"
     "`/terrakko vm start`  — 停止中の VM を起動\n"
     "`/terrakko vm stop`   — 起動中の VM をシャットダウン\n"
