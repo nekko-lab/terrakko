@@ -164,6 +164,9 @@ cython_debug/
 !.env.temp
 db/
 
+# Local compose overrides (environment-specific, never commit)
+app/compose.override.yaml
+
 app/node_modules/
 
 # CA certificates (place on server manually, never commit)
