@@ -75,9 +75,8 @@ async def on_ready():
         bot.tree.copy_global_to(guild=guild)
         await bot.tree.sync(guild=guild)
         logger.info("Commands synced to guild %s (immediate)", config.DISCORD_GUILD_ID)
-    else:
-        await bot.tree.sync()
-        logger.info("Commands synced globally (up to 1 hour to propagate)")
+    await bot.tree.sync()
+    logger.info("Global commands synced (DM available within 1 hour)")
     logger.info(config.LOGO)
     logger.info("Terrakko v%s ready — logged in as %s", config.version, bot.user)
 
@@ -225,14 +224,15 @@ _CONSOLE_WELCOME = (
 
 @terrakko_group.command(name="console", description="Start a DM session with Terrakko")
 async def terrakko_console(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
     try:
         await interaction.user.send(_CONSOLE_WELCOME)
         active_sessions.add(interaction.user.id)
 
-        await interaction.response.send_message("DM を開きました。", ephemeral=True)
+        await interaction.followup.send("DM を開きました。", ephemeral=True)
         logger.info("Console session started: %s", interaction.user.id)
     except discord.Forbidden:
-        await interaction.response.send_message("DM を送信できませんでした。このサーバーのメンバーからの DM を許可してください。", ephemeral=True)
+        await interaction.followup.send("DM を送信できませんでした。このサーバーのメンバーからの DM を許可してください。", ephemeral=True)
 
 #------ Autocomplete ----------------------------------------------------#
 
