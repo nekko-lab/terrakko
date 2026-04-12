@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Asia/Tokyo",
+  "labels": [
+    "dependencies"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security",
+      "dependencies"
+    ],
+    "schedule": [
+      "at any time"
+    ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Python dependencies (requirements.txt)",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "groupName": "Python dependencies",
+      "schedule": [
+        "before 9am on monday"
+      ]
+    },
+    {
+      "description": "Docker base image (Dockerfile)",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "groupName": "Docker base image",
+      "schedule": [
+        "before 9am on monday"
+      ]
+    },
+    {
+      "description": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "schedule": [
+        "before 9am on monday"
+      ]
+    },
+    {
+      "description": "Security fixes are applied immediately regardless of schedule",
+      "matchLabels": [
+        "security"
+      ],
+      "schedule": [
+        "at any time"
+      ]
+    }
+  ]
+}
