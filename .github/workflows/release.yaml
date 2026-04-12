@@ -7,14 +7,13 @@ on:
 
 jobs:
   release:
-    name: Create release
+    name: Release and publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
       pull-requests: read
       models: read
-    outputs:
-      new_tag: ${{ steps.version.outputs.new_tag }}
 
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +67,34 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "${{ steps.version.outputs.new_tag }}"
           git push origin "${{ steps.version.outputs.new_tag }}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.new_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.new_tag }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            lang=C
+            dir=src
 
       - name: Collect PRs and generate AI release notes
         id: notes
@@ -176,45 +203,3 @@ jobs:
           else
             gh release create "$TAG" --title "$TAG" --generate-notes
           fi
-
-  publish:
-    name: Build and push Docker image to GHCR
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release.outputs.new_tag }}
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ needs.release.outputs.new_tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.new_tag }}
-            type=raw,value=latest
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            lang=C
-            dir=src
