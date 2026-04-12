@@ -10,6 +10,9 @@ services:
           dir: "${WORKDIR}"
     user: "1000:1000"
     working_dir: /home/${WORKDIR}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./${WORKDIR}:/home/${WORKDIR}
       - ./certs:/certs:ro
