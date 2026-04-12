@@ -52,7 +52,7 @@ PVE_CA_CERT   = os.getenv("PVE_CA_CERT", "")
 
 # Discord Bot
 DISCORD_TOKEN    = os.getenv("DISCORD_TOKEN")
-DISCORD_GUILD_ID = int(os.getenv("DISCORD_GUILD_ID", "0"))
+DISCORD_GUILD_ID = int(os.getenv("DISCORD_GUILD_ID") or "0")
 
 # bw-agent (Bitwarden Send for password delivery)
 BW_AGENT_URL  = os.getenv("BW_AGENT_URL", "")

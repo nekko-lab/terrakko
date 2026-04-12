@@ -11,6 +11,7 @@
 | `PVE_TOKEN` | ✓ | API トークン名（例: `terrakko`） |
 | `PVE_SECRET` | ✓ | API トークンのシークレット値 |
 | `PVE_TEMP_NAME` | ✓ | 使用する VM テンプレート名（例: `ubuntu24.04-General-template-v1.0.0`） |
+| `PVE_POOL` | — | VM を作成するリソースプール名。空の場合はプール指定なしで作成 |
 | `PVE_CA_CERT` | — | CA 証明書のファイルパス。空の場合はシステム CA バンドルを使用 |
 
 `PVE_USER`、`PVE_TOKEN`、`PVE_SECRET` は `pvesh create /access/users/.../token/...` で取得した値を設定します。
@@ -20,6 +21,7 @@
 | 変数 | 必須 | 説明 |
 | ---- | ---- | ---- |
 | `DISCORD_TOKEN` | ✓ | Discord Bot Token |
+| `DISCORD_GUILD_ID` | — | ギルド ID。設定するとコマンドが即時反映（開発向け）。空の場合はグローバル同期（最大1時間） |
 
 ### bw-agent（パスワード配送）
 

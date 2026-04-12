@@ -40,15 +40,9 @@ import string
 # requests (bw-agent HTTP call)
 import requests
 
-#------ Import files ----------------------------------------------------#
-
-# config.py
-import config
-
-# proxmox_ve.py
-import proxmox_ve
-
 #------ Logging setup ---------------------------------------------------#
+# Must be configured before importing proxmox_ve, which runs PVE
+# initialization at module load time and emits log messages.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,6 +50,14 @@ logging.basicConfig(
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+#------ Import files ----------------------------------------------------#
+
+# config.py
+import config
+
+# proxmox_ve.py
+import proxmox_ve
 
 #------ Initialize Bot --------------------------------------------------#
 
@@ -114,9 +116,13 @@ async def send_dm_or_fallback(user, interaction, content):
 
 async def monitor_and_notify(upid, user, interaction, success_msg, fail_msg):
     """Watch a PVE task in the background and notify the user on completion."""
-    ok, status = await proxmox_ve.WatchTask(upid)
-    exitstatus = status.get('exitstatus', 'UNKNOWN')
-    message = success_msg if ok else f"{fail_msg} (exitstatus: {exitstatus})"
+    try:
+        ok, status = await proxmox_ve.WatchTask(upid)
+        exitstatus = status.get('exitstatus', 'UNKNOWN')
+        message = success_msg if ok else f"{fail_msg} (exitstatus: {exitstatus})"
+    except Exception as e:
+        logger.error("monitor_and_notify: unexpected error for task %s: %s", upid, e)
+        message = f"{fail_msg} (予期しないエラー: {e})"
     await send_dm_or_fallback(user, interaction, message)
 
 
@@ -155,7 +161,14 @@ async def request_bw_send(password: str) -> str | None:
 
 async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, password):
     """Watch a build task and deliver the generated password via bw-agent Send on success."""
-    ok, status = await proxmox_ve.WatchTask(upid)
+    try:
+        ok, status = await proxmox_ve.WatchTask(upid)
+    except Exception as e:
+        logger.error("monitor_and_notify_build: unexpected error for task %s: %s", upid, e)
+        await send_dm_or_fallback(user, interaction,
+            f"VM `{vm_name}` (VMID:{vmid_int}) のビルド監視中に予期しないエラーが発生しました。(error: {e})")
+        return
+
     if not ok:
         exitstatus = status.get('exitstatus', 'UNKNOWN')
         await send_dm_or_fallback(user, interaction,
@@ -165,7 +178,7 @@ async def monitor_and_notify_build(upid, user, interaction, vm_name, vmid_int, p
 
     send_url = await request_bw_send(password)
     if send_url:
-        message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\n初期パスワード: {send_url}\n（このリンクは15分で失効します）")
+        message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\n初期パスワード確認用ワンタイムリンク: {send_url}\n（このリンクは15分で失効します。リンク先でパスワードを確認してください）")
     else:
         message = (f"VM `{vm_name}` (VMID:{vmid_int}) のビルドが完了しました。\nパスワードの共有に失敗しました。PVE WebコンソールのCloud-initから変更してください。")
 

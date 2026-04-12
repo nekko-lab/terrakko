@@ -368,7 +368,7 @@ async def GetVMIPAddresses(r, vmid):
         logger.debug("GetVMIPAddresses: fetching IPs for VM %s", vmid)
 
         interfaces = await asyncio.to_thread(
-            pve.nodes(r).qemu(vmid).agent.get, 'network-get-interfaces'
+            pve.nodes(r).qemu(vmid).agent('network-get-interfaces').get
         )
         interfaces = interfaces['result']
 
