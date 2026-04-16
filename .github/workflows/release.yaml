@@ -61,6 +61,26 @@ jobs:
           echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
           echo "New tag: ${NEW}"
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push Docker image
+        id: docker_push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.new_tag }}
+            ghcr.io/${{ github.repository }}:latest
+          build-args: |
+            lang=C
+            dir=src
+
       - name: Create and push tag
         run: |
           git config user.name "github-actions[bot]"
@@ -78,7 +98,6 @@ jobs:
             const prevTag = '${{ steps.prev_tag.outputs.tag }}';
             const newTag  = '${{ steps.version.outputs.new_tag }}';
 
-            // Collect PRs merged since previous tag
             let commits = [];
             try {
               const { data } = await github.rest.repos.compareCommits({
@@ -127,7 +146,6 @@ jobs:
               `#${pr.number} [${pr.labels.join(', ') || 'no label'}] ${pr.title}\n${pr.body}`
             ).join('\n\n');
 
-            // Generate release notes via GitHub Models
             try {
               const res = await fetch('https://models.inference.ai.azure.com/chat/completions', {
                 method:  'POST',
@@ -175,31 +193,3 @@ jobs:
           else
             gh release create "$TAG" --title "$TAG" --generate-notes
           fi
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.new_tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.new_tag }}
-            type=raw,value=latest
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            lang=C
-            dir=src
