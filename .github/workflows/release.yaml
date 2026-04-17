@@ -79,8 +79,7 @@ jobs:
             --paginate \
             --slurp \
             "orgs/${OWNER}/packages/container/${REPO}/versions" \
-            --jq --arg tag "${TAG}" '[.[][]?.metadata.container.tags[]? | select(. == $tag)] | length' \
-            2>"${GHCR_ERR_FILE}"); then
+            2>"${GHCR_ERR_FILE}" | jq --arg tag "${TAG}" '[.[][]?.metadata.container.tags[]? | select(. == $tag)] | length'); then
             :
           else
             if grep -q "404" "${GHCR_ERR_FILE}"; then
@@ -103,14 +102,17 @@ jobs:
           TAG_EXISTS=false
           if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
             TAG_EXISTS=true
+            echo "Tag ${TAG} already exists."
           fi
 
-          if [ "${TAG_EXISTS}" = "true" ] || gh release view "${TAG}" &>/dev/null; then
-            echo "release_exists=true" >> "$GITHUB_OUTPUT"
-            echo "Tag/Release ${TAG} already exists — skipping tag and release creation."
-          else
-            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+          RELEASE_EXISTS=false
+          if gh release view "${TAG}" &>/dev/null; then
+            RELEASE_EXISTS=true
+            echo "Release ${TAG} already exists."
           fi
+
+          echo "tag_exists=${TAG_EXISTS}" >> "$GITHUB_OUTPUT"
+          echo "release_exists=${RELEASE_EXISTS}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -133,7 +135,7 @@ jobs:
             dir=src
 
       - name: Create and push tag
-        if: steps.check.outputs.release_exists != 'true'
+        if: steps.check.outputs.tag_exists != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
