@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Release and publish
@@ -70,18 +74,40 @@ jobs:
           OWNER="${{ github.repository_owner }}"
           REPO="${{ github.event.repository.name }}"
 
-          IMAGE_COUNT=$(gh api \
+          GHCR_ERR_FILE=$(mktemp)
+          if IMAGE_COUNT=$(gh api \
+            --paginate \
+            --slurp \
             "orgs/${OWNER}/packages/container/${REPO}/versions" \
-            --jq "[.[].metadata.container.tags[] | select(. == \"${TAG}\")] | length" \
-            2>/dev/null || echo "0")
+            --jq --arg tag "${TAG}" '[.[][]?.metadata.container.tags[]? | select(. == $tag)] | length' \
+            2>"${GHCR_ERR_FILE}"); then
+            :
+          else
+            if grep -q "404" "${GHCR_ERR_FILE}"; then
+              IMAGE_COUNT="0"
+              echo "GHCR package ${OWNER}/${REPO} does not exist yet. Continuing."
+            else
+              cat "${GHCR_ERR_FILE}" >&2
+              echo "::error::Failed to query existing GHCR image versions."
+              rm -f "${GHCR_ERR_FILE}"
+              exit 1
+            fi
+          fi
+          rm -f "${GHCR_ERR_FILE}"
+
           if [ "${IMAGE_COUNT}" -gt "0" ]; then
             echo "::error::Image ${TAG} already exists in GHCR. Aborting."
             exit 1
           fi
 
-          if gh release view "${TAG}" &>/dev/null; then
+          TAG_EXISTS=false
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+            TAG_EXISTS=true
+          fi
+
+          if [ "${TAG_EXISTS}" = "true" ] || gh release view "${TAG}" &>/dev/null; then
             echo "release_exists=true" >> "$GITHUB_OUTPUT"
-            echo "Release ${TAG} already exists — skipping tag and release creation."
+            echo "Tag/Release ${TAG} already exists — skipping tag and release creation."
           else
             echo "release_exists=false" >> "$GITHUB_OUTPUT"
           fi
