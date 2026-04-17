@@ -61,6 +61,31 @@ jobs:
           echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
           echo "New tag: ${NEW}"
 
+      - name: Check existing release and image
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.new_tag }}"
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+
+          IMAGE_COUNT=$(gh api \
+            "orgs/${OWNER}/packages/container/${REPO}/versions" \
+            --jq "[.[].metadata.container.tags[] | select(. == \"${TAG}\")] | length" \
+            2>/dev/null || echo "0")
+          if [ "${IMAGE_COUNT}" -gt "0" ]; then
+            echo "::error::Image ${TAG} already exists in GHCR. Aborting."
+            exit 1
+          fi
+
+          if gh release view "${TAG}" &>/dev/null; then
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${TAG} already exists — skipping tag and release creation."
+          else
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -82,6 +107,7 @@ jobs:
             dir=src
 
       - name: Create and push tag
+        if: steps.check.outputs.release_exists != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -90,6 +116,7 @@ jobs:
 
       - name: Collect PRs and generate AI release notes
         id: notes
+        if: steps.check.outputs.release_exists != 'true'
         uses: actions/github-script@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,6 +209,7 @@ jobs:
             core.setOutput('body', '');
 
       - name: Create GitHub Release
+        if: steps.check.outputs.release_exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NOTES_BODY: ${{ steps.notes.outputs.body }}
