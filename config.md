@@ -29,6 +29,15 @@
 | ---- | ---- | ---- |
 | `BW_AGENT_URL` | — | bw-agent の内部 URL（例: `http://bw-agent:8080`）。未設定の場合はパスワード共有をスキップし、PVE コンソールから変更するよう案内する |
 
+### VM リソース上限
+
+| 変数 | 必須 | デフォルト | 説明 |
+| ---- | ---- | ---------- | ---- |
+| `VM_MAX_CPU` | — | `16` | VM に割り当て可能な最大 CPU コア数 |
+| `VM_MAX_MEMORY` | — | `32768` | VM に割り当て可能な最大メモリ（MB） |
+| `VM_MAX_DISK` | — | `500` | VM に割り当て可能な最大ディスクサイズ（GB） |
+| `VM_MAX_REPLICAS` | — | `5` | `/terrakko vm build` で一度に作成できる VM の最大台数 |
+
 ### Docker
 
 | 変数 | 必須 | 説明 |
@@ -55,13 +64,21 @@ PVE_USER=terrakko-agent@pve
 PVE_TOKEN=terrakko
 PVE_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 PVE_TEMP_NAME=ubuntu24.04-General-template-v1.0.0
+PVE_POOL=
 PVE_CA_CERT=
 
 # Discord
 DISCORD_TOKEN=your_discord_bot_token
+DISCORD_GUILD_ID=
 
 # bw-agent
 BW_AGENT_URL=http://bw-agent:8080
+
+# VM resource limits (optional)
+VM_MAX_CPU=16
+VM_MAX_MEMORY=32768
+VM_MAX_DISK=500
+VM_MAX_REPLICAS=5
 
 # Docker
 WORKDIR=src
